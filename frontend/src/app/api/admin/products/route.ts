@@ -1,0 +1,89 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+
+// GET all products
+export async function GET(request: NextRequest) {
+  try {
+    const products = await prisma.product.findMany({
+      include: {
+        categories: {
+          include: { category: true },
+        },
+        images: {
+          orderBy: { sortOrder: 'asc' },
+          take: 1,
+        },
+        variants: {
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Transform for the admin table
+    const result = products.map((p) => {
+      const prices = p.variants.map((v) => Number(v.price));
+      const salePrices = p.variants.filter((v) => v.salePrice).map((v) => Number(v.salePrice!));
+
+      return {
+        id: p.id,
+        wcId: p.wcId,
+        name: p.name,
+        slug: p.slug,
+        sku: p.sku || '-',
+        basePrice: prices.length > 0 ? Math.min(...prices) : Number(p.basePrice) || 0,
+        discountPrice: salePrices.length > 0 ? Math.min(...salePrices) : Number(p.discountPrice) || null,
+        stock: p.stock,
+        inStock: p.inStock,
+        status: p.status,
+        isFeatured: p.isFeatured,
+        image: p.images[0]?.url || null,
+        categories: p.categories.map((pc) => pc.category.name),
+        variantCount: p.variants.length,
+      };
+    });
+
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('Error fetching products:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch products' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST create product
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const product = await prisma.product.create({
+      data: {
+        name: body.name,
+        slug: body.slug,
+        description: body.description || null,
+        shortDescription: body.shortDescription || null,
+        basePrice: body.basePrice || null,
+        discountPrice: body.discountPrice || null,
+        sku: body.sku || null,
+        inStock: body.inStock ?? true,
+        stock: body.stock || 0,
+        lowStockAlert: body.lowStockAlert || 10,
+        brand: body.brand || null,
+        material: body.material || null,
+        warranty: body.warranty || null,
+        status: body.status || 'ACTIVE',
+        isFeatured: body.isFeatured || false,
+      },
+    });
+
+    return NextResponse.json(product, { status: 201 });
+  } catch (error: any) {
+    console.error('Error creating product:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to create product' },
+      { status: 500 }
+    );
+  }
+}
