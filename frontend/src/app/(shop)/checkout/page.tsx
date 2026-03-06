@@ -46,8 +46,10 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({
     name: '', phone: '', email: '', address: '', city: '', state: '', pincode: '', notes: '',
   });
+  const [savedAddresses, setSavedAddresses] = useState<{ id: string; fullName: string; phone: string; addressLine1: string; city: string; state: string; pincode: string; isDefault: boolean }[]>([]);
+  const [selectedAddrId, setSelectedAddrId] = useState('');
 
-  // Pre-fill user info
+  // Pre-fill user info + load saved addresses
   useEffect(() => {
     if (user) {
       setForm(f => ({
@@ -58,6 +60,29 @@ export default function CheckoutPage() {
       }));
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch('/api/auth/addresses', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(j => {
+        if (j.success && j.data.length > 0) {
+          setSavedAddresses(j.data);
+          const def = j.data.find((a: any) => a.isDefault) || j.data[0];
+          setSelectedAddrId(def.id);
+          setForm(f => ({
+            ...f,
+            name:    def.fullName  || f.name,
+            phone:   def.phone     || f.phone,
+            address: def.addressLine1,
+            city:    def.city,
+            state:   def.state,
+            pincode: def.pincode,
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [token]);
 
   // Determine items to checkout
   const checkoutItems = source === 'buynow' && buyNowItem
@@ -366,6 +391,52 @@ export default function CheckoutPage() {
                   <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                     <Truck className="w-4 h-4 text-indigo-500" /> Delivery Details
                   </h2>
+
+                  {/* Saved address quick-select */}
+                  {savedAddresses.length > 0 && (
+                    <div className="mb-3">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Use Saved Address</label>
+                      <div className="space-y-2">
+                        {savedAddresses.map(addr => (
+                          <label key={addr.id} className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition ${selectedAddrId === addr.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                            <input type="radio" name="savedAddr" value={addr.id}
+                              checked={selectedAddrId === addr.id}
+                              onChange={() => {
+                                setSelectedAddrId(addr.id);
+                                setForm(f => ({
+                                  ...f,
+                                  name:    addr.fullName,
+                                  phone:   addr.phone,
+                                  address: addr.addressLine1,
+                                  city:    addr.city,
+                                  state:   addr.state,
+                                  pincode: addr.pincode,
+                                }));
+                              }}
+                              className="accent-indigo-600 mt-0.5"
+                            />
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-gray-800">{addr.fullName} · {addr.phone}</p>
+                              <p className="text-xs text-gray-500">{addr.addressLine1}, {addr.city}, {addr.state} – {addr.pincode}</p>
+                              {addr.isDefault && <span className="text-xs text-indigo-600 font-semibold">Default</span>}
+                            </div>
+                          </label>
+                        ))}
+                        <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition ${selectedAddrId === 'new' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                          <input type="radio" name="savedAddr" value="new"
+                            checked={selectedAddrId === 'new'}
+                            onChange={() => {
+                              setSelectedAddrId('new');
+                              setForm(f => ({ ...f, address: '', city: '', state: '', pincode: '' }));
+                            }}
+                            className="accent-indigo-600"
+                          />
+                          <span className="text-sm font-semibold text-gray-700">+ Enter a new address</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-3">
                     <input
                       name="name" value={form.name} onChange={handleChange}

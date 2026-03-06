@@ -8,11 +8,21 @@ import {
   User, ShoppingBag, Lock, LogOut, ChevronRight,
   Save, Eye, EyeOff, CheckCircle, Package, RefreshCw,
   Mail, Phone, BadgeCheck, Calendar, MapPin, CreditCard, Banknote,
+  Plus, Trash2, Star, Home, Pencil, X,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import toast from 'react-hot-toast';
 
-type Tab = 'profile' | 'orders' | 'password';
+type Tab = 'profile' | 'orders' | 'addresses' | 'password';
+
+interface Address {
+  id: string; fullName: string; phone: string;
+  addressLine1: string; addressLine2: string | null;
+  city: string; state: string; pincode: string;
+  landmark: string | null; isDefault: boolean;
+}
+
+const EMPTY_ADDR = { fullName: '', phone: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', landmark: '' };
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING:    'bg-yellow-100 text-yellow-700',
@@ -84,6 +94,103 @@ function AccountContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, token]);
 
+  // ── Address state ───────────────────────────────────────────────────
+  const [addresses, setAddresses]       = useState<Address[]>([]);
+  const [addrLoading, setAddrLoading]   = useState(false);
+  const [addrLoaded, setAddrLoaded]     = useState(false);
+  const [showAddrForm, setShowAddrForm] = useState(false);
+  const [editAddr, setEditAddr]         = useState<Address | null>(null);
+  const [addrForm, setAddrForm]         = useState(EMPTY_ADDR);
+  const [savingAddr, setSavingAddr]     = useState(false);
+
+  const fetchAddresses = (authToken: string) => {
+    setAddrLoading(true);
+    fetch('/api/auth/addresses', { headers: { Authorization: `Bearer ${authToken}` } })
+      .then(r => r.json())
+      .then(j => { if (j.success) { setAddresses(j.data); setAddrLoaded(true); } })
+      .catch(() => toast.error('Could not load addresses'))
+      .finally(() => setAddrLoading(false));
+  };
+
+  useEffect(() => {
+    if (tab === 'addresses' && token && !addrLoaded) fetchAddresses(token);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, token]);
+
+  const openAddForm = () => {
+    setEditAddr(null);
+    setAddrForm(EMPTY_ADDR);
+    setShowAddrForm(true);
+  };
+
+  const openEditForm = (addr: Address) => {
+    setEditAddr(addr);
+    setAddrForm({
+      fullName: addr.fullName, phone: addr.phone,
+      addressLine1: addr.addressLine1, addressLine2: addr.addressLine2 || '',
+      city: addr.city, state: addr.state, pincode: addr.pincode,
+      landmark: addr.landmark || '',
+    });
+    setShowAddrForm(true);
+  };
+
+  const handleSaveAddr = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { fullName, phone, addressLine1, city, state, pincode } = addrForm;
+    if (!fullName || !phone || !addressLine1 || !city || !state || !pincode) {
+      toast.error('Please fill all required fields'); return;
+    }
+    setSavingAddr(true);
+    try {
+      const url    = editAddr ? `/api/auth/addresses/${editAddr.id}` : '/api/auth/addresses';
+      const method = editAddr ? 'PATCH' : 'POST';
+      const res    = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(addrForm),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      toast.success(editAddr ? 'Address updated!' : 'Address saved!');
+      setShowAddrForm(false);
+      setAddrLoaded(false);
+      if (token) fetchAddresses(token);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to save address');
+    } finally {
+      setSavingAddr(false);
+    }
+  };
+
+  const handleDeleteAddr = async (id: string) => {
+    if (!confirm('Delete this address?')) return;
+    try {
+      await fetch(`/api/auth/addresses/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Address deleted');
+      setAddresses(prev => prev.filter(a => a.id !== id));
+    } catch {
+      toast.error('Failed to delete address');
+    }
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      await fetch(`/api/auth/addresses/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ isDefault: true }),
+      });
+      toast.success('Default address updated');
+      setAddrLoaded(false);
+      if (token) fetchAddresses(token);
+    } catch {
+      toast.error('Failed to update default');
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile.email.trim()) { toast.error('Email is required'); return; }
@@ -131,7 +238,7 @@ function AccountContent() {
 
   useEffect(() => {
     const t = searchParams.get('tab') as Tab;
-    if (t && ['profile', 'orders', 'password'].includes(t)) setTab(t);
+    if (t && ['profile', 'orders', 'addresses', 'password'].includes(t)) setTab(t);
   }, [searchParams]);
 
   if (!loggedIn) return null;
@@ -140,9 +247,10 @@ function AccountContent() {
   const initials    = (user?.firstName?.[0] || user?.email?.[0] || 'U').toUpperCase();
 
   const tabs = [
-    { key: 'profile'  as Tab, label: 'My Profile',  icon: User },
-    { key: 'orders'   as Tab, label: 'My Orders',   icon: ShoppingBag },
-    { key: 'password' as Tab, label: 'Password',    icon: Lock },
+    { key: 'profile'   as Tab, label: 'My Profile',   icon: User },
+    { key: 'orders'    as Tab, label: 'My Orders',    icon: ShoppingBag },
+    { key: 'addresses' as Tab, label: 'Addresses',    icon: MapPin },
+    { key: 'password'  as Tab, label: 'Password',     icon: Lock },
   ];
 
   return (
@@ -435,6 +543,180 @@ function AccountContent() {
                         ))}
                       </div>
                     )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Addresses Tab ── */}
+              {tab === 'addresses' && (
+                <motion.div key="addresses" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <div className="space-y-4">
+
+                    {/* Header */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-5 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900">Saved Addresses</h2>
+                        <p className="text-sm text-gray-400 mt-0.5">Manage your delivery addresses</p>
+                      </div>
+                      <button
+                        onClick={openAddForm}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition"
+                      >
+                        <Plus className="w-4 h-4" /> Add Address
+                      </button>
+                    </div>
+
+                    {/* Add/Edit Form */}
+                    {showAddrForm && (
+                      <div className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                          <h3 className="font-bold text-gray-900 text-sm">
+                            {editAddr ? 'Edit Address' : 'Add New Address'}
+                          </h3>
+                          <button onClick={() => setShowAddrForm(false)} className="text-gray-400 hover:text-gray-600 transition">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <form onSubmit={handleSaveAddr} className="px-6 py-5 space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Full Name *</label>
+                              <input value={addrForm.fullName} onChange={e => setAddrForm(f => ({ ...f, fullName: e.target.value }))}
+                                placeholder="Full name" required
+                                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-400 transition" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Phone *</label>
+                              <input value={addrForm.phone} onChange={e => setAddrForm(f => ({ ...f, phone: e.target.value }))}
+                                placeholder="Phone number" type="tel" required
+                                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-400 transition" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Address Line 1 *</label>
+                            <input value={addrForm.addressLine1} onChange={e => setAddrForm(f => ({ ...f, addressLine1: e.target.value }))}
+                              placeholder="House no, Street name" required
+                              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-400 transition" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Address Line 2</label>
+                            <input value={addrForm.addressLine2} onChange={e => setAddrForm(f => ({ ...f, addressLine2: e.target.value }))}
+                              placeholder="Area, Colony (optional)"
+                              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-400 transition" />
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">City *</label>
+                              <input value={addrForm.city} onChange={e => setAddrForm(f => ({ ...f, city: e.target.value }))}
+                                placeholder="City" required
+                                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-400 transition" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">State *</label>
+                              <input value={addrForm.state} onChange={e => setAddrForm(f => ({ ...f, state: e.target.value }))}
+                                placeholder="State" required
+                                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-400 transition" />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Pincode *</label>
+                              <input value={addrForm.pincode} onChange={e => setAddrForm(f => ({ ...f, pincode: e.target.value }))}
+                                placeholder="Pincode" required
+                                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-400 transition" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Landmark</label>
+                            <input value={addrForm.landmark} onChange={e => setAddrForm(f => ({ ...f, landmark: e.target.value }))}
+                              placeholder="Near landmark (optional)"
+                              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-400 transition" />
+                          </div>
+                          <div className="flex items-center justify-between pt-2">
+                            <button type="button" onClick={() => setShowAddrForm(false)}
+                              className="px-4 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                              Cancel
+                            </button>
+                            <button type="submit" disabled={savingAddr}
+                              className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition disabled:opacity-60">
+                              {savingAddr
+                                ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
+                                : <><Save className="w-4 h-4" /> {editAddr ? 'Update' : 'Save Address'}</>
+                              }
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    {/* Address List */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                      {addrLoading ? (
+                        <div className="flex items-center justify-center py-16">
+                          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : addresses.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-400">
+                          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                            <Home className="w-8 h-8 opacity-30" />
+                          </div>
+                          <p className="text-sm font-medium text-gray-500">No saved addresses</p>
+                          <p className="text-xs text-gray-400">Add an address for faster checkout</p>
+                          <button onClick={openAddForm}
+                            className="mt-1 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition">
+                            Add Address
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-gray-50">
+                          {addresses.map(addr => (
+                            <div key={addr.id} className="p-5 hover:bg-gray-50/50 transition">
+                              <div className="flex items-start gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
+                                  <Home className="w-4 h-4 text-indigo-500" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <p className="font-semibold text-gray-900 text-sm">{addr.fullName}</p>
+                                    <p className="text-xs text-gray-400">{addr.phone}</p>
+                                    {addr.isDefault && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">
+                                        <Star className="w-3 h-3" /> Default
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-600 leading-relaxed">
+                                    {addr.addressLine1}
+                                    {addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
+                                    {addr.landmark ? ` (Near ${addr.landmark})` : ''}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {addr.city}, {addr.state} – {addr.pincode}
+                                  </p>
+                                </div>
+                                <div className="flex flex-col gap-2 shrink-0">
+                                  <button onClick={() => openEditForm(addr)}
+                                    className="p-1.5 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-indigo-500"
+                                    title="Edit">
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button onClick={() => handleDeleteAddr(addr.id)}
+                                    className="p-1.5 rounded-lg hover:bg-red-50 transition text-gray-400 hover:text-red-500"
+                                    title="Delete">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                  {!addr.isDefault && (
+                                    <button onClick={() => handleSetDefault(addr.id)}
+                                      className="p-1.5 rounded-lg hover:bg-yellow-50 transition text-gray-400 hover:text-yellow-500"
+                                      title="Set as default">
+                                      <Star className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               )}
