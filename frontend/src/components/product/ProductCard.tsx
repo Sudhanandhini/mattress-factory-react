@@ -64,6 +64,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!isLoggedIn()) {
       toast.error('Please login to add to wishlist');
       router.push('/login');
@@ -82,6 +83,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!isLoggedIn()) {
       toast.error('Please login to add to cart');
       router.push('/login');
@@ -140,8 +142,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               </span>
             )}
 
-            {/* Wishlist & Cart icons — show on hover */}
-            <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {/* Wishlist & Cart icons — always visible */}
+            <div className="absolute bottom-3 right-3 flex gap-2">
               <button
                 onClick={handleWishlist}
                 className={`w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-colors ${

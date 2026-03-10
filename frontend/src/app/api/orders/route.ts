@@ -54,18 +54,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create shipping address
-    const shippingAddress = await prisma.address.create({
-      data: {
+    // Reuse existing matching address or create one
+    let shippingAddress = await prisma.address.findFirst({
+      where: {
         userId:       user.id,
-        fullName:     name,
-        phone,
         addressLine1: address,
         city:         city || 'Bangalore',
-        state:        state || 'Karnataka',
         pincode:      pincode || '000000',
       },
     });
+    if (!shippingAddress) {
+      shippingAddress = await prisma.address.create({
+        data: {
+          userId:       user.id,
+          fullName:     name,
+          phone,
+          addressLine1: address,
+          city:         city || 'Bangalore',
+          state:        state || 'Karnataka',
+          pincode:      pincode || '000000',
+        },
+      });
+    }
 
     const isPaid = paymentMethod === 'RAZORPAY' && !!razorpayPaymentId;
 
