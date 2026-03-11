@@ -1,192 +1,390 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Star, ArrowRight, ShieldCheck, Truck, Headphones, BadgePercent, Quote } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star, ArrowRight, ChevronDown, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/ui/AnimatedSection';
 import { FeaturedProducts } from '@/components/product/FeaturedProducts';
 
+/* ─────────────────────────── DATA ─────────────────────────── */
+
 const categories = [
-  { name: 'Memory Foam', slug: 'memory-foam-mattress', image: '/images/categories/memory-foam.jpg' },
-  { name: 'Spring Mattress', slug: 'spring-mattress', image: '/images/categories/spring.jpg' },
-  { name: 'Orthopedic', slug: 'orthopedic-mattress', image: '/images/categories/orthopedic.jpg' },
-  { name: 'Hybrid', slug: 'hybrid-mattress', image: '/images/categories/hybrid.jpg' },
-  { name: 'Coir Mattress', slug: 'coir-mattress', image: '/images/categories/coir.jpg' },
+  { name: 'Coir', slug: 'coir-mattress', image: '/images/categories/coir.jpg' },
+  { name: 'Bonnell Spring', slug: 'spring-mattress', image: '/images/categories/spring.jpg' },
+  { name: 'Euro Top', slug: 'euro-top-mattress', image: '/images/categories/eurotop.jpg' },
+  { name: 'Foam', slug: 'foam-mattress', image: '/images/categories/foam.jpg' },
   { name: 'Latex Foam', slug: 'latex-foam-mattress', image: '/images/categories/latex.jpg' },
+  { name: 'Memory Foam', slug: 'memory-foam-mattress', image: '/images/categories/memory-foam.jpg' },
 ];
 
-const marqueeItems = [
-  'BONNELL SPRING', 'COIR MATTRESS', 'EURO TOP', 'FOAM MATTRESS', 'HYBRID MATTRESS',
-  'LATEX FOAM', 'MEMORY FOAM', 'ORTHOPEDIC', 'POCKET SPRING', 'REBONDED FOAM', 'SPRING MATTRESS',
+const heroFeatures = [
+  { icon: '🏅', title: 'Ergonomic Alignment', desc: 'A perfect balance of soft, firm, and cosy.' },
+  { icon: '❄️', title: 'So Cool', desc: 'Cooling gel that will keep you comfy sleeping.' },
+  { icon: '🔬', title: 'Pillow Labs', desc: 'Developed by delivery engineers & researchers.' },
+  { icon: '✅', title: '10-Year Warranty', desc: 'Designed to consistently improve & transitions.' },
 ];
 
-const features = [
-  { icon: ShieldCheck, title: 'Premium Quality', desc: 'Pure materials with rigorous quality control ensuring lasting comfort.' },
-  { icon: BadgePercent, title: 'Fair Pricing', desc: 'Factory-direct prices without middlemen. Maximum value guaranteed.' },
-  { icon: Headphones, title: 'Dedicated Help', desc: 'Our sleep experts are available to guide your perfect mattress choice.' },
-  { icon: Truck, title: 'Everyday Practicality', desc: 'Free delivery, easy returns, and hassle-free setup at your doorstep.' },
+const compareRows = [
+  { feature: 'Primary Material', orthoPro: 'High Density Foam', cloudLuxe: 'Memory Foam', hybridDuo: 'Latex + Springs' },
+  { feature: 'Firmness Level', orthoPro: 'Firm (8/10)', cloudLuxe: 'Soft (4/10)', hybridDuo: 'Medium (6/10)' },
+  { feature: 'Ideal For', orthoPro: 'Back Pain Sufferers', cloudLuxe: 'Side Sleepers', hybridDuo: 'Active Lifestyles' },
+  { feature: 'Warranty', orthoPro: '10 Years', cloudLuxe: '10 Years', hybridDuo: '12 Years', bold: true },
+  { feature: 'Pricing', orthoPro: '₹12,999', cloudLuxe: '₹15,499', hybridDuo: '₹19,999', bold: true },
 ];
 
 const testimonials = [
   {
     name: 'Priya Sharma',
-    location: 'Bengaluru',
+    label: 'Verified Buyer • 2 months ago',
     rating: 5,
-    text: 'The memory foam mattress from MATTRESS FACTORY completely transformed my sleep. I wake up refreshed every morning. The quality is outstanding for the price!',
+    text: '"The Ortho mattress is a life-changer. My chronic back pain disappeared within a week. Best investment for my health!"',
+    initials: 'PS',
+    color: 'from-rose-400 to-rose-600',
   },
   {
-    name: 'Rahul Verma',
-    location: 'Chennai',
+    name: 'Rahul Mehta',
+    label: 'Verified Buyer • 2 months ago',
     rating: 5,
-    text: 'Excellent product and service. The mattress was delivered on time and the setup was hassle-free. My back pain has significantly reduced.',
+    text: '"Ordering was seamless and delivery happened on time. The factory-direct price is unbeatable for this quality."',
+    initials: 'RM',
+    color: 'from-blue-400 to-blue-600',
   },
   {
-    name: 'Anita Krishnan',
-    location: 'Karur',
-    rating: 4,
-    text: 'Beautiful bedsheets and comfortable quilts. MATTRESS FACTORY products are a class apart. Will definitely recommend to friends and family.',
+    name: 'Ananya Gupta',
+    label: 'Verified Buyer • 2 months ago',
+    rating: 5,
+    text: '"Love the edge support. It feels very premium and hotel-like. The 100-night trial gave me the confidence to buy."',
+    initials: 'AG',
+    color: 'from-amber-400 to-amber-600',
+  },
+  {
+    name: 'Karthik Reddy',
+    label: 'Verified Buyer • 3 months ago',
+    rating: 5,
+    text: '"Excellent quality and super fast delivery. The mattress feels exactly like a luxury hotel bed. Very happy!"',
+    initials: 'KR',
+    color: 'from-green-400 to-green-600',
+  },
+  {
+    name: 'Meena Iyer',
+    label: 'Verified Buyer • 1 month ago',
+    rating: 5,
+    text: '"The memory foam contours perfectly to my body. I haven\'t slept this well in years. Worth every rupee!"',
+    initials: 'MI',
+    color: 'from-purple-400 to-purple-600',
   },
 ];
+
+const faqs = [
+  {
+    q: 'Which firmness level should I choose?',
+    a: 'If you sleep on your back or stomach, a firm mattress (7-8/10) provides better spinal alignment. Side sleepers benefit from a medium-soft option (4-5/10) that cushions the shoulders and hips. If you share the bed or switch positions, a medium (6/10) is a safe all-rounder.',
+  },
+  {
+    q: 'What is the benefit of a Hybrid Mattress?',
+    a: 'Hybrid mattresses combine the bounce and support of springs with the pressure relief of foam or latex. You get the best of both worlds — motion isolation, cooling airflow from the coil system, and contouring comfort from the foam layers. Ideal for active lifestyles and couples.',
+  },
+  {
+    q: 'Is a 100-night trial really risk-free?',
+    a: 'Yes. If you are not completely satisfied within 100 nights of sleeping on your new mattress, we will arrange a free pickup and issue a full refund — no questions asked. We are confident in our quality and want you to be too.',
+  },
+];
+
+const sixFeatures = [
+  { icon: '💨', title: 'Zero-Heat Tech', desc: 'Advanced open-cell structure ensures continuous airflow for sweat-free nights.' },
+  { icon: '✨', title: 'Hypoallergenic', desc: 'Certified fabric treatment that repels dust mites and allergens effectively.' },
+  { icon: '✔️', title: 'ISO Certified Quality', desc: 'Rigorous testing cycles that simulate 20 years of real-world mattress usage.' },
+  { icon: '🚚', title: 'Direct From Factory', desc: 'Eliminating retailers means you get the best materials at honest prices.' },
+  { icon: '🛡️', title: 'No Motion Transfer', desc: 'Move without waking your partner, thanks to isolated pocket spring technology.' },
+  { icon: '🏅', title: 'Best For Back Health', desc: 'Multi-zone support designed with orthopedists for spine alignment.' },
+];
+
+/* ─────────────────────────── FAQ ITEM ─────────────────────────── */
+
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-gray-200 last:border-b-0 cursor-pointer" onClick={() => setOpen(!open)}>
+      <div className="flex items-center justify-between py-6 px-1">
+        <span className="font-semibold text-[#1a1a2e] text-lg">{q}</span>
+        <ChevronDown className={`w-5 h-5 text-gray-500 flex-shrink-0 ml-4 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+      </div>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            <p className="text-gray-600 text-base leading-relaxed pb-6 px-1">{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ─────────────────────────── TESTIMONIAL SLIDER ─────────────────────────── */
+
+function TestimonialSlider() {
+  const [current, setCurrent] = useState(0);
+  const [slidesPerView, setSlidesPerView] = useState(3);
+  const total = testimonials.length;
+
+  useEffect(() => {
+    const update = () => {
+      if (window.innerWidth < 768) setSlidesPerView(1);
+      else if (window.innerWidth < 1024) setSlidesPerView(2);
+      else setSlidesPerView(3);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  const maxIndex = Math.max(0, total - slidesPerView);
+
+  const prev = () => setCurrent((c) => Math.max(0, c - 1));
+  const next = () => setCurrent((c) => Math.min(maxIndex, c + 1));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((c) => (c >= maxIndex ? 0 : c + 1));
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [maxIndex]);
+
+  const gap = 24; // px, matches gap-6
+
+  return (
+    <div className="relative">
+      <div className="overflow-hidden">
+        <motion.div
+          className="flex"
+          style={{ gap: `${gap}px` }}
+          animate={{ x: `calc(-${current} * ((100% + ${gap}px) / ${slidesPerView}))` }}
+          transition={{ type: 'spring', stiffness: 280, damping: 30 }}
+        >
+          {testimonials.map((t, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0"
+              style={{ width: `calc((100% - ${gap * (slidesPerView - 1)}px) / ${slidesPerView})` }}
+            >
+              <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm h-full flex flex-col">
+                {/* Avatar + name */}
+                <div className="flex items-center gap-4 mb-5">
+                  <div className={`w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-base bg-gradient-to-br ${t.color}`}>
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="font-bold text-[#1a1a2e] text-base">{t.name}</p>
+                    <p className="text-sm text-gray-400">{t.label}</p>
+                  </div>
+                </div>
+                {/* Stars */}
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className={`w-4 h-4 ${j < t.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
+                  ))}
+                </div>
+                <p className="text-gray-600 text-base leading-relaxed italic flex-1">{t.text}</p>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Nav controls */}
+      <div className="flex items-center justify-center gap-4 mt-8">
+        <button
+          onClick={prev}
+          disabled={current === 0}
+          className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#1a2a6c] hover:text-[#1a2a6c] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+
+        <div className="flex gap-2">
+          {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`h-2.5 rounded-full transition-all duration-300 ${i === current ? 'w-7 bg-[#1a2a6c]' : 'w-2.5 bg-gray-300'}`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={next}
+          disabled={current >= maxIndex}
+          className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center hover:border-[#1a2a6c] hover:text-[#1a2a6c] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── PAGE ─────────────────────────── */
 
 export default function HomePage() {
   return (
     <div className="min-h-screen overflow-hidden">
-      {/* Hero Section */}
-      <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center bg-navy-700 overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(236,72,153,0.1) 0%, transparent 50%)',
-          }} />
-        </div>
 
-        <div className="container mx-auto px-4 relative z-10">
+      {/* ───── HERO ───── */}
+      <section className="relative bg-white overflow-hidden">
+        <div className="w-full px-6 lg:px-16 py-16 lg:py-20 max-w-screen-2xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Text */}
+            {/* Left */}
             <div>
               <motion.div
-                initial={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
                 className="inline-block mb-6"
               >
-                <span className="bg-accent-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold">
-                  New Arrivals
+                <span className="bg-rose-100 text-rose-600 px-5 py-2 rounded-full text-sm font-semibold tracking-wide">
+                  Factory Direct: Save Up to 45%
                 </span>
               </motion.div>
 
               <motion.h1
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.1 }}
-                className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6"
+                className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#1a1a2e] leading-[1.05] mb-6"
               >
-                Transform Your{' '}
-                <span className="font-cursive italic text-accent-400">Sleep</span>{' '}
-                <span className="font-cursive italic text-accent-400">Experience</span>
+                Sleep Better.<br />
+                Live Better.
               </motion.h1>
 
               <motion.p
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2 }}
-                className="text-lg text-gray-300 mb-8 max-w-lg"
+                className="text-gray-600 text-xl mb-10 max-w-lg"
               >
-                Discover our curated collection of premium mattresses, bedsheets, and home furnishings. Crafted with love, delivered to your door.
+                Experience hotel-grade luxury without the middleman markup. Engineered in India for optimal spinal alignment and cooling airflow.
               </motion.p>
 
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.3 }}
-                className="flex flex-wrap gap-4"
+                className="flex flex-wrap gap-4 mb-12"
               >
                 <Link href="/products">
-                  <Button variant="primary" size="lg">
-                    Shop Now <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
+                  <button className="bg-[#1a2a6c] hover:bg-[#0f1d56] text-white font-semibold px-9 py-4 rounded-lg text-base transition-colors duration-200">
+                    Shop Now
+                  </button>
                 </Link>
-                <Link href="/contact">
-                  <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10">
-                    Customize
-                  </Button>
+                <Link href="/products">
+                  <button className="border-2 border-gray-300 text-[#1a1a2e] hover:bg-gray-50 font-semibold px-9 py-4 rounded-lg text-base transition-colors duration-200">
+                    Compare Mattresses
+                  </button>
                 </Link>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.7, delay: 0.4 }}
+                className="flex flex-wrap gap-8"
+              >
+                {[
+                  { icon: '🛡️', label: '10-Year Warranty' },
+                  { icon: '🚚', label: 'Free Shipping' },
+                  { icon: '✅', label: 'ISO Certified' },
+                ].map((b) => (
+                  <div key={b.label} className="flex items-center gap-2 text-gray-600 text-base font-medium">
+                    <span className="text-lg">{b.icon}</span>
+                    <span>{b.label}</span>
+                  </div>
+                ))}
               </motion.div>
             </div>
 
-            {/* Hero Image Placeholder */}
+            {/* Right — hero image */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="hidden lg:block"
+              className="hidden lg:block relative"
             >
-              <div className="relative">
-                <div className="w-full aspect-[4/3] rounded-2xl bg-gradient-to-br from-navy-600 to-navy-800 overflow-hidden shadow-2xl flex items-center justify-center border border-white/10">
-                  <div className="text-center p-8">
-                    <div className="text-8xl mb-4">&#128716;</div>
-                    <p className="text-white/60 text-sm">Premium Mattress Collection</p>
-                  </div>
+              <div className="relative rounded-3xl overflow-hidden bg-[#f5ede8] aspect-[5/4] flex items-center justify-center">
+                <img
+                  src="/images/hero-mattress.jpg"
+                  alt="Premium Mattress"
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 pointer-events-none">
+                  <div className="text-9xl mb-4">🛏️</div>
+                  <p className="text-gray-500 font-medium text-lg">Premium Mattress Collection</p>
                 </div>
-                {/* Floating accent */}
-                <div className="absolute -top-4 -right-4 w-24 h-24 bg-accent-500/20 rounded-full blur-xl animate-float" />
-                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-gold-400/20 rounded-full blur-xl animate-float" style={{ animationDelay: '1.5s' }} />
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Marquee Ticker */}
-      <div className="bg-gray-100 py-4 border-y border-gray-200">
-        <div className="marquee-container">
-          <div className="marquee-content gap-8">
-            {[...marqueeItems, ...marqueeItems].map((item, i) => (
-              <span key={i} className="flex items-center gap-8 text-sm font-medium text-gray-500 uppercase tracking-wider">
-                <span>{item}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-accent-400" />
-              </span>
+      {/* ───── HERO FEATURE STRIP ───── */}
+      <section className="bg-gray-50 border-y border-gray-100">
+        <div className="w-full max-w-screen-2xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-200">
+            {heroFeatures.map((f, i) => (
+              <motion.div
+                key={f.title}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex flex-col items-center text-center py-10 px-6 gap-3"
+              >
+                <span className="text-4xl mb-1">{f.icon}</span>
+                <p className="font-bold text-[#1a1a2e] text-base">{f.title}</p>
+                <p className="text-sm text-gray-500 leading-snug">{f.desc}</p>
+              </motion.div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Discover Fresh Styles */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+      {/* ───── EXPLORE CATEGORIES ───── */}
+      <section className="py-16 bg-white">
+        <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
           <AnimatedSection>
-            <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12">
-              <div>
-                <span className="section-badge mb-3 inline-block">Collection</span>
-                <h2 className="text-3xl md:text-4xl font-bold text-navy-700">
-                  Discover Fresh{' '}
-                  <span className="font-cursive italic text-accent-500">Styles</span>
-                </h2>
-              </div>
-              <Link
-                href="/products"
-                className="mt-4 md:mt-0 text-accent-500 font-semibold flex items-center gap-1 hover:gap-2 transition-all"
-              >
-                Check All Products <ArrowRight className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a2e]">Explore Categories</h2>
+              <Link href="/products" className="text-gray-500 text-base font-medium flex items-center gap-1 hover:text-[#1a2a6c] transition-colors">
+                View All <ArrowRight className="w-5 h-5" />
               </Link>
             </div>
           </AnimatedSection>
 
-          <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
-            {categories.map((category) => (
-              <StaggerItem key={category.slug}>
-                <Link href={`/products?category=${category.slug}`}>
-                  <div className="group cursor-pointer">
-                    <div className="aspect-square rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden mb-3 relative">
-                      <div className="absolute inset-0 flex items-center justify-center text-5xl group-hover:scale-110 transition-transform duration-300">
-                        &#128716;
-                      </div>
-                      <div className="absolute inset-0 bg-navy-700/0 group-hover:bg-navy-700/10 transition-colors duration-300 rounded-xl" />
+          <StaggerContainer className="grid grid-cols-3 md:grid-cols-6 gap-5">
+            {categories.map((cat) => (
+              <StaggerItem key={cat.slug}>
+                <Link href={`/products?category=${cat.slug}`}>
+                  <div className="group flex flex-col items-center gap-3 cursor-pointer">
+                    <div className="w-full aspect-square rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center group-hover:shadow-md transition-shadow">
+                      <img
+                        src={cat.image}
+                        alt={cat.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const el = e.target as HTMLImageElement;
+                          el.style.display = 'none';
+                          if (el.parentElement) el.parentElement.innerHTML = `<div class="text-4xl">🛏️</div>`;
+                        }}
+                      />
                     </div>
-                    <h3 className="text-sm font-semibold text-navy-700 text-center group-hover:text-accent-500 transition-colors">
-                      {category.name}
-                    </h3>
+                    <p className="text-sm font-semibold text-[#1a1a2e] text-center group-hover:text-[#1a2a6c]">{cat.name}</p>
                   </div>
                 </Link>
               </StaggerItem>
@@ -195,135 +393,63 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Customer Favorites / Featured Products */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <AnimatedSection>
-            <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12">
-              <div>
-                <span className="section-badge mb-3 inline-block">Bestsellers</span>
-                <h2 className="text-3xl md:text-4xl font-bold text-navy-700">
-                  Customer{' '}
-                  <span className="font-cursive italic text-accent-500">Favorites</span>
-                </h2>
-              </div>
-              <Link
-                href="/products"
-                className="mt-4 md:mt-0 text-accent-500 font-semibold flex items-center gap-1 hover:gap-2 transition-all"
-              >
-                View All <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
+      {/* ───── FIND YOUR PERFECT MATCH ───── */}
+      <section className="py-16 bg-gray-50">
+        <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
+          <AnimatedSection className="mb-10">
+            <p className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-2">Bestsellers</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a2e]">Find Your Perfect Match</h2>
+            <p className="text-gray-500 text-lg mt-2">Every sleeper is different. Discover the collection tailored to your specific comfort needs.</p>
           </AnimatedSection>
           <FeaturedProducts />
         </div>
       </section>
 
-      {/* What Makes Us Different */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <AnimatedSection className="text-center mb-14">
-            <span className="section-badge mb-3 inline-block">Our Strengths</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-navy-700">
-              What Makes Us{' '}
-              <span className="font-cursive italic text-accent-500">Different</span>
-            </h2>
-            <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
-              Thoughtfully made home essentials that balance quality, comfort, and value.
-            </p>
+      {/* ───── FESTIVE SALE BANNER ───── */}
+      <section className="py-12 bg-white">
+        <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
+          <AnimatedSection>
+            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#dce8f5] via-[#e8f0fb] to-[#f0f4fb] min-h-[260px] flex items-center">
+              <span className="absolute top-5 left-[40%] text-4xl opacity-50 rotate-12 select-none">🍂</span>
+              <span className="absolute top-10 right-[30%] text-3xl opacity-30 -rotate-12 select-none">🍂</span>
+              <span className="absolute bottom-5 right-[38%] text-2xl opacity-25 rotate-45 select-none">🍂</span>
+              <div className="relative z-10 px-12 py-12 w-full md:w-1/2">
+                <h2 className="text-5xl md:text-6xl font-extrabold text-[#1a1a2e] mb-2">Festive Sale</h2>
+                <p className="text-2xl md:text-3xl font-semibold text-gray-700 mb-6">
+                  Up to <span className="font-extrabold text-[#1a1a2e]">50% OFF</span>
+                </p>
+                <Link href="/products">
+                  <button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-9 py-3.5 rounded-full text-base transition-colors shadow-md">
+                    Shop Now
+                  </button>
+                </Link>
+              </div>
+              <div className="hidden md:block absolute right-0 top-0 h-full w-1/2">
+                <img
+                  src="/images/banner-bedroom.jpg"
+                  alt="Festive Sale"
+                  className="w-full h-full object-cover object-left"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              </div>
+            </div>
           </AnimatedSection>
-
-          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <StaggerItem key={feature.title}>
-                  <div className="text-center group">
-                    <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-accent-50 flex items-center justify-center group-hover:bg-accent-500 transition-colors duration-300">
-                      <Icon className="w-9 h-9 text-accent-500 group-hover:text-white transition-colors duration-300" />
-                    </div>
-                    <h3 className="text-lg font-bold text-navy-700 mb-2">{feature.title}</h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">{feature.desc}</p>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </StaggerContainer>
         </div>
       </section>
 
-      {/* Mission & Vision */}
-      <section className="py-20 bg-navy-700">
-        <div className="container mx-auto px-4">
-          <AnimatedSection className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-white">
-              Mission{' '}
-              <span className="font-cursive italic text-accent-400">&amp;</span>{' '}
-              Vision
-            </h2>
-          </AnimatedSection>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <AnimatedSection direction="left" delay={0.1}>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/10 h-full hover:bg-white/15 transition-colors duration-300">
-                <div className="w-12 h-12 rounded-full bg-accent-500 flex items-center justify-center mb-5">
-                  <span className="text-white text-xl font-bold">M</span>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4">Our Mission</h3>
-                <p className="text-gray-300 leading-relaxed">
-                  To continuously craft comfortable yet affordable mattresses for every household. We envision making quality sleep solutions accessible to all, while maintaining the highest standards of craftsmanship.
-                </p>
-              </div>
-            </AnimatedSection>
-
-            <AnimatedSection direction="right" delay={0.2}>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/10 h-full hover:bg-white/15 transition-colors duration-300">
-                <div className="w-12 h-12 rounded-full bg-gold-400 flex items-center justify-center mb-5">
-                  <span className="text-navy-700 text-xl font-bold">V</span>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4">Our Vision</h3>
-                <p className="text-gray-300 leading-relaxed">
-                  To be India&apos;s most trusted home furnishings brand, renowned for quality, innovation, and customer delight. Every product is a testament to our vision of bringing comfort accessible to everyone.
-                </p>
-              </div>
-            </AnimatedSection>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 bg-navy-800">
-        <div className="container mx-auto px-4">
-          <AnimatedSection className="mb-14">
-            <span className="section-badge mb-3 inline-block">Testimonials</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-white">
-              What Our Customers{' '}
-              <span className="font-cursive italic text-accent-400">Say</span>
-            </h2>
-          </AnimatedSection>
-
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
-              <StaggerItem key={i}>
-                <div className="bg-white rounded-2xl p-7 h-full relative">
-                  <Quote className="absolute top-6 right-6 w-8 h-8 text-accent-100" />
-                  <div className="flex items-center gap-1 mb-4">
-                    {[...Array(5)].map((_, j) => (
-                      <Star
-                        key={j}
-                        className={`w-4 h-4 ${j < t.rating ? 'fill-gold-400 text-gold-400' : 'text-gray-300'}`}
-                      />
-                    ))}
+      {/* ───── 6 FEATURE CARDS ───── */}
+      <section className="py-16 bg-white">
+        <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+            {sixFeatures.map((item) => (
+              <StaggerItem key={item.title}>
+                <div className="flex items-start gap-5 group">
+                  <div className="w-14 h-14 flex-shrink-0 rounded-xl bg-gray-100 flex items-center justify-center text-2xl group-hover:bg-blue-50 transition-colors">
+                    {item.icon}
                   </div>
-                  <p className="text-gray-700 mb-6 leading-relaxed text-sm">{t.text}</p>
-                  <div className="flex items-center gap-3 pt-4 border-t">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-400 to-accent-500 flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">{t.name[0]}</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-navy-700 text-sm">{t.name}</p>
-                      <p className="text-xs text-gray-500">{t.location}</p>
-                    </div>
+                  <div>
+                    <h3 className="font-bold text-[#1a1a2e] text-base mb-2">{item.title}</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               </StaggerItem>
@@ -332,34 +458,112 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Newsletter / CTA */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
-        <div className="container mx-auto px-4">
-          <AnimatedSection className="text-center max-w-3xl mx-auto">
-            <span className="section-badge mb-3 inline-block">Stay Updated</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-navy-700 mb-4">
-              Discover the{' '}
-              <span className="font-cursive italic text-accent-500">Newest Mattress</span>{' '}
-              Styles &amp; Trends
+      {/* ───── HOW DO WE COMPARE? ───── */}
+      <section className="py-20 bg-[#edf1f7]">
+        <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
+          <AnimatedSection className="text-center mb-14">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-[#1a1a2e] mb-4">How Do We Compare?</h2>
+            <p className="text-gray-500 text-lg">Detailed transparency to help you make an informed decision.</p>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm  mx-auto">
+              {/* Header */}
+              <div className="grid grid-cols-4 border-b border-gray-100">
+                <div className="py-6 px-8 font-bold text-[#1a1a2e] text-base">Features</div>
+                <div className="py-6 px-8 font-bold text-[#1a2a6c] text-base border-l border-gray-100">Ortho Pro</div>
+                <div className="py-6 px-8 font-bold text-[#1a1a2e] text-base border-l border-gray-100">Cloud Luxe</div>
+                <div className="py-6 px-8 font-bold text-[#1a1a2e] text-base border-l border-gray-100">Hybrid Duo</div>
+              </div>
+              {compareRows.map((row, i) => (
+                <div key={row.feature} className={`grid grid-cols-4 border-b border-gray-50 last:border-b-0 ${i % 2 !== 0 ? 'bg-gray-50/40' : ''}`}>
+                  <div className="py-6 px-8 text-[#1a1a2e] text-base">{row.feature}</div>
+                  <div className={`py-6 px-8 text-base border-l border-gray-100 ${row.bold ? 'font-bold text-[#1a1a2e]' : 'text-gray-600'}`}>{row.orthoPro}</div>
+                  <div className={`py-6 px-8 text-base border-l border-gray-100 ${row.bold ? 'font-bold text-[#1a1a2e]' : 'text-gray-600'}`}>{row.cloudLuxe}</div>
+                  <div className={`py-6 px-8 text-base border-l border-gray-100 ${row.bold ? 'font-bold text-[#1a1a2e]' : 'text-gray-600'}`}>{row.hybridDuo}</div>
+                </div>
+              ))}
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ───── LOVED BY 100,000+ SLEEPERS — SLIDER ───── */}
+      <section className="py-20 bg-white">
+        <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
+          <AnimatedSection className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-[#1a1a2e] mb-4">
+              Loved by 100,000+ Sleepers
             </h2>
-            <p className="text-gray-600 mb-8">
+            <div className="flex items-center justify-center gap-1 mb-2">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-6 h-6 text-gray-300" />
+              ))}
+            </div>
+            <p className="text-gray-500 text-base">Rated 4.9/5 Based on Verified Purchase Reviews</p>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <TestimonialSlider />
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ───── THE MATTRESS BUYING GUIDE (FAQ) ───── */}
+      <section className="py-20 bg-gray-50">
+        <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
+          <AnimatedSection className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-[#1a1a2e] mb-4">The Mattress Buying Guide</h2>
+            <p className="text-gray-500 text-lg">Not sure which one to pick? We've got you covered.</p>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden px-8 max-w-4xl mx-auto">
+              {faqs.map((faq) => (
+                <FAQItem key={faq.q} q={faq.q} a={faq.a} />
+              ))}
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ───── NEWSLETTER / CTA ───── */}
+      <section className="py-20 bg-white border-t border-gray-100">
+        <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto text-center">
+          <AnimatedSection>
+            <p className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">Stay Updated</p>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-[#1a1a2e] mb-4">
+              Discover the Newest Mattress Styles &amp; Trends
+            </h2>
+            <p className="text-gray-500 text-lg mb-10 max-w-2xl mx-auto">
               Experience the finest home furnishings. Order now for free delivery in Karur. Discover comfort that transforms your space.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/products">
-                <Button variant="primary" size="lg">
-                  Explore Products <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
+                <button className="bg-[#1a2a6c] hover:bg-[#0f1d56] text-white font-semibold px-10 py-4 rounded-lg text-base flex items-center gap-2 transition-colors">
+                  Explore Products <ArrowRight className="w-5 h-5" />
+                </button>
               </Link>
               <Link href="/about">
-                <Button variant="accent" size="lg">
+                <button className="border-2 border-gray-200 text-[#1a1a2e] hover:bg-gray-50 font-semibold px-10 py-4 rounded-lg text-base transition-colors">
                   Know More
-                </Button>
+                </button>
               </Link>
             </div>
           </AnimatedSection>
         </div>
       </section>
+
+      {/* ───── FLOATING EXPERT ADVICE BUTTON ───── */}
+      <div className="fixed bottom-8 right-6 z-50">
+        <Link href="/contact">
+          <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3.5 rounded-full shadow-xl text-base transition-colors">
+            <Phone className="w-5 h-5" />
+            Expert Advice
+          </button>
+        </Link>
+      </div>
+
     </div>
   );
 }

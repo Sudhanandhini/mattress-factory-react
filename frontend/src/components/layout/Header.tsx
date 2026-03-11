@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Menu, X, LogIn, LogOut, UserCircle, User, ShoppingBag, Lock } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -8,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore, useWishlistStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { AuthModal } from '@/components/auth/AuthModal';
+import logo from "../../images/logo.png"
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -43,19 +45,30 @@ export function Header() {
           scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white shadow-sm'
         }`}
       >
-        <div className="container mx-auto px-4">
+
+
+<div className="bg-[#1a2a6c] text-white py-2 overflow-hidden">
+  <div className="flex whitespace-nowrap animate-marquee">
+    {[...Array(4)].map((_, i) => (
+      <span key={i} className="inline-flex items-center gap-6 px-8 text-sm font-medium tracking-wide">
+        <span>🔥 Flash Sale: Get Extra 10% OFF + Free Pillows on All Ortho Mattresses!</span>
+        <span className="bg-white text-[#1a2a6c] px-2 py-0.5 rounded font-bold text-xs">Code: SLEEP10</span>
+        <span className="text-yellow-300">★</span>
+        <span>Free Delivery on Orders Above ₹999</span>
+        <span className="text-yellow-300">★</span>
+       
+      </span>
+    ))}
+  </div>
+</div>
+
+        <div className="container mx-auto p-4">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.8 4.8C16.4 3.4 14.3 2.5 12 2.5c-4.7 0-8.5 3.8-8.5 8.5s3.8 8.5 8.5 8.5c3.4 0 6.4-2 7.7-5h-2.1c-1.2 2-3.3 3.3-5.7 3.3-3.7 0-6.7-3-6.7-6.7s3-6.7 6.7-6.7c1.9 0 3.5.8 4.7 2L14 9.5h7V2.5l-3.2 2.3z" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-primary-700 font-cursive tracking-wide">MATTRESS</div>
-                <div className="text-lg font-bold text-accent-600 font-cursive tracking-wide -mt-1">FACTORY</div>
-              </div>
+             <div>
+              <Image src={logo} alt="logo" width={300}   />
+             </div>
             </Link>
 
             {/* Desktop Navigation */}
@@ -64,10 +77,10 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="relative text-gray-700 font-medium hover:text-navy-700 transition-colors duration-200 py-2 group"
+                  className="relative text-gray-700 font-medium hover:text-navy-700 transition-colors duration-200 py-2 group text-xl"
                 >
                   {link.label}
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-500 transition-all duration-300 group-hover:w-full" />
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-500 transition-all duration-300 group-hover:w-full " />
                 </Link>
               ))}
             </nav>
@@ -76,7 +89,7 @@ export function Header() {
             <div className="flex items-center gap-2">
               {/* Wishlist */}
               <Link href="/wishlist" className="relative p-2 text-gray-700 hover:text-red-500 transition-colors">
-                <Heart className="w-5 h-5" />
+                <Heart className="w-8 h-8" />
                 {wishlistCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
                     {wishlistCount}
@@ -86,7 +99,7 @@ export function Header() {
 
               {/* Cart */}
               <Link href="/cart" className="relative p-2 text-gray-700 hover:text-navy-700 transition-colors">
-                <ShoppingCart className="w-5 h-5" />
+                <ShoppingCart className="w-8 h-8" />
                 <span className="absolute -top-0.5 -right-0.5 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
                   {cartCount}
                 </span>
@@ -149,7 +162,7 @@ export function Header() {
               )}
 
               <Link href="/contact" className="hidden md:block">
-                <Button variant="primary" size="sm">Get Quote</Button>
+                <Button variant="primary" size="md">Get Quote</Button>
               </Link>
 
               {/* Mobile Menu Toggle */}

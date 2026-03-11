@@ -13,14 +13,15 @@ function toSlug(name: string) {
 
 export default function AddProductPage() {
   const router = useRouter();
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError]           = useState('');
-  const [success, setSuccess]       = useState('');
-  const [formData, setFormData]     = useState<ProductFormData>(EMPTY_FORM);
-  const [images, setImages]         = useState<ImageRow[]>([emptyImage(true)]);
-  const [specs, setSpecs]           = useState<SpecRow[]>([{ label: '', value: '' }]);
-  const [freebies, setFreebies]     = useState<FreebieRow[]>([emptyFreebie()]);
-  const [variants, setVariants]     = useState<VariantRow[]>([emptyVariant()]);
+  const [submitting, setSubmitting]           = useState(false);
+  const [error, setError]                     = useState('');
+  const [success, setSuccess]                 = useState('');
+  const [formData, setFormData]               = useState<ProductFormData>(EMPTY_FORM);
+  const [images, setImages]                   = useState<ImageRow[]>([emptyImage(true)]);
+  const [specs, setSpecs]                     = useState<SpecRow[]>([{ label: '', value: '' }]);
+  const [freebies, setFreebies]               = useState<FreebieRow[]>([emptyFreebie()]);
+  const [variants, setVariants]               = useState<VariantRow[]>([emptyVariant()]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +52,7 @@ export default function AddProductPage() {
           status:           formData.status,
           isFeatured:       formData.isFeatured,
           inStock:          true,
+          categoryIds:    selectedCategories,
           images:         images.filter(img => img.url).map(img => ({ url: img.url, altText: img.altText || null, isPrimary: img.isPrimary })),
           specifications: specs.filter(s => s.label.trim() && s.value.trim()),
           freebies:       freebies.filter(f => f.name.trim()).map(f => ({ name: f.name, image: f.image || null })),
@@ -83,6 +85,7 @@ export default function AddProductPage() {
       specs={specs}
       freebies={freebies}
       variants={variants}
+      selectedCategories={selectedCategories}
       submitting={submitting}
       error={error}
       success={success}
@@ -91,6 +94,7 @@ export default function AddProductPage() {
       onSpecsChange={setSpecs}
       onFreebiesChange={setFreebies}
       onVariantsChange={setVariants}
+      onCategoriesChange={setSelectedCategories}
       onSubmit={handleSubmit}
       onErrorClose={() => setError('')}
     />

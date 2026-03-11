@@ -22,6 +22,7 @@ export default function EditProductPage() {
   const [specs, setSpecs]             = useState<SpecRow[]>([{ label: '', value: '' }]);
   const [freebies, setFreebies]       = useState<FreebieRow[]>([emptyFreebie()]);
   const [variants, setVariants]       = useState<VariantRow[]>([emptyVariant()]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (!productId) return;
@@ -47,6 +48,11 @@ export default function EditProductPage() {
           status:           p.status    || 'ACTIVE',
           isFeatured:       Boolean(p.isFeatured),
         });
+
+        // Load existing categories
+        if (p.categories?.length > 0) {
+          setSelectedCategories(p.categories.map((pc: any) => pc.category?.id || pc.categoryId).filter(Boolean));
+        }
 
         if (p.images?.length > 0) {
           setImages(p.images.map((img: any) => ({
@@ -110,6 +116,7 @@ export default function EditProductPage() {
           warranty:         formData.warranty || null,
           status:           formData.status,
           isFeatured:       formData.isFeatured,
+          categoryIds:    selectedCategories,
           images:         images.filter(img => img.url).map(img => ({ url: img.url, altText: img.altText || null, isPrimary: img.isPrimary })),
           specifications: specs.filter(s => s.label.trim() && s.value.trim()),
           freebies:       freebies.filter(f => f.name.trim()).map(f => ({ name: f.name, image: f.image || null })),
@@ -149,6 +156,7 @@ export default function EditProductPage() {
       specs={specs}
       freebies={freebies}
       variants={variants}
+      selectedCategories={selectedCategories}
       submitting={submitting}
       error={error}
       success={success}
@@ -157,6 +165,7 @@ export default function EditProductPage() {
       onSpecsChange={setSpecs}
       onFreebiesChange={setFreebies}
       onVariantsChange={setVariants}
+      onCategoriesChange={setSelectedCategories}
       onSubmit={handleSubmit}
       onErrorClose={() => setError('')}
     />

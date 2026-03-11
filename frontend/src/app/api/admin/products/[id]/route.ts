@@ -112,6 +112,16 @@ export async function PUT(
       }
     }
 
+    // ── categories (replace all) ─────────────────────────────
+    if (Array.isArray(body.categoryIds)) {
+      await prisma.productCategory.deleteMany({ where: { productId: id } });
+      if (body.categoryIds.length > 0) {
+        await prisma.productCategory.createMany({
+          data: body.categoryIds.map((categoryId: string) => ({ productId: id, categoryId })),
+        });
+      }
+    }
+
     return NextResponse.json({ success: true, message: 'Product updated successfully' });
   } catch (error: any) {
     console.error('Error updating product:', error);

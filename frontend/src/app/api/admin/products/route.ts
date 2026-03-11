@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// GET all products
-export async function GET(_request: NextRequest) {
+// GET all products (supports ?categoryId=xxx filter)
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const categoryId = searchParams.get('categoryId') || undefined;
+
+    const where = categoryId
+      ? { categories: { some: { categoryId } } }
+      : undefined;
+
     const products = await prisma.product.findMany({
+      where,
       include: {
         categories: { include: { category: true } },
         images: { orderBy: { sortOrder: 'asc' }, take: 1 },
@@ -110,6 +118,11 @@ export async function POST(request: NextRequest) {
               sortOrder: i,
               isActive:  true,
             })),
+        } : undefined,
+
+        // Categories
+        categories: body.categoryIds?.length > 0 ? {
+          create: body.categoryIds.map((categoryId: string) => ({ categoryId })),
         } : undefined,
       },
     });

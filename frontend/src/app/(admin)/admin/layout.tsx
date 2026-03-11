@@ -128,12 +128,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
             {/* Right Side Icons */}
             <div className="flex items-center gap-4">
-              <button className="relative text-gray-500 hover:text-gray-700">
+              {/* <button className="relative text-gray-500 hover:text-gray-700">
                 <Bell className="w-6 h-6" />
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   3
                 </span>
-              </button>
+              </button> */}
 
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">

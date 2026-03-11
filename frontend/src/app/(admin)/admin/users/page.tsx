@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, RefreshCw, Users, ShoppingCart, Mail, Phone } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, RefreshCw, Users, ShoppingCart, Mail, Phone, Eye } from 'lucide-react';
 
 interface UserRow {
   id: string;
@@ -22,6 +23,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [users, setUsers]     = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
@@ -101,6 +103,7 @@ export default function AdminUsersPage() {
                     <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wider">Orders</th>
                     <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wider">Status</th>
                     <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wider">Joined</th>
+                    <th className="px-5 py-3.5" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -148,6 +151,14 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap">
                           {new Date(user.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </td>
+                        <td className="px-5 py-4">
+                          <button
+                            onClick={() => router.push(`/admin/users/${user.id}`)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View
+                          </button>
                         </td>
                       </tr>
                     );
