@@ -46,9 +46,7 @@ export function Footer() {
               <Image src={logo} alt="logo" width={300}  className="object-contain" />
             </div>
             </Link>
-            <p className="text-sm mb-4 leading-relaxed text-black">
-              Karumatampatti, Karur M, Karur, Tamil Nadu, India - 639 002
-            </p>
+          
             <div className="flex gap-3">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
@@ -109,15 +107,15 @@ export function Footer() {
               <li className="flex items-start gap-3">
                 <Phone className="w-4 h-4 text-accent-400 mt-1 flex-shrink-0" />
                 <div>
-                  <a href="tel:+918150011660" className="text-black hover:text-accent-500 transition-colors">
-                    +91 81500 11660
+                  <a href="tel:+917760693333" className="text-black hover:text-accent-500 transition-colors">
+                    +91 77606 93333
                   </a>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <Mail className="w-4 h-4 text-accent-400 mt-1 flex-shrink-0" />
-                <a href="mailto:contact@mattressfactory.com" className="text-black hover:text-accent-500 transition-colors">
-                  contact@mattressfactory.com
+                <a href="mailto:info@mattressfactory.in" className="text-black hover:text-accent-500 transition-colors">
+                 info@mattressfactory.in
                 </a>
               </li>
               <li className="flex items-start gap-3">
@@ -125,6 +123,23 @@ export function Footer() {
                 <div className="text-black">
                   <p>Monday - Saturday: 09:00 am - 8:00 pm</p>
                   <p>Sunday: 10:00 am - 4:00 pm</p>
+                </div>
+              </li>
+               <li className="flex items-start gap-3">
+                <Clock className="w-4 h-4 text-accent-400 mt-1 flex-shrink-0" />
+                <div className="text-black">
+                 
+                  <p>Sulakshmi Enterprise, 
+
+No. 29/2 (Old No. 1), Studio Road,
+
+J.B. Kaval, Near Rajkumar Samadhi,
+
+Munneshwara Block, Yeshwanthpur,
+
+Bangalore – 560058,
+
+Karnataka, India</p>
                 </div>
               </li>
             </ul>
@@ -137,15 +152,15 @@ export function Footer() {
         <div className="container mx-auto px-4 py-5">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-black">
             <p>&copy; {new Date().getFullYear()} MATTRESS FACTORY. All Rights Reserved.</p>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/privacy" className="hover:text-accent-500 transition-colors">Privacy Policy</Link>
+              <Link href="/return" className="hover:text-accent-500 transition-colors">Return Policy</Link>
+              <Link href="/shipping" className="hover:text-accent-500 transition-colors">Shipping Policy</Link>
+              <Link href="/terms" className="hover:text-accent-500 transition-colors">Terms &amp; Conditions</Link>
+            </div>
             <p>
               Developed with{' '}
-             
-              <a
-                href="https://sunsystechnologies.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className=" transition-colors"
-              >
+              <a href="https://sunsystechnologies.com" target="_blank" rel="noopener noreferrer" className="transition-colors">
                 Sunsys Technologies
               </a>
             </p>

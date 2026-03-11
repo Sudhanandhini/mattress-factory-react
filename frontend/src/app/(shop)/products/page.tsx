@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
+import bg from '../../../images/bg.jpg';
 import { Search, SlidersHorizontal, X, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { ProductCard } from '@/components/product/ProductCard';
 import { Button } from '@/components/ui/Button';
@@ -368,11 +370,10 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen overflow-hidden">
       {/* Hero */}
-      <section className="relative bg-navy-700 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(236,72,153,0.1) 0%, transparent 50%)',
-          }} />
+      <section className="relative overflow-hidden min-h-[300px] flex items-center">
+        <div className="absolute inset-0">
+          <Image src={bg} alt="products background" fill className="object-cover" />
+          <div className="absolute inset-0 bg-navy-700/30" />
         </div>
         <div className="container mx-auto px-4 relative z-10 py-14">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -382,8 +383,9 @@ export default function ProductsPage() {
               <span className="text-white">Products</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-white">
-              <span className="font-cursive italic text-accent-400">Shop</span>
+              Our <span className="font-cursive italic text-accent-400">Products</span>
             </h1>
+            <p className="text-gray-300 mt-3 text-lg">Explore our full range of premium mattresses</p>
           </motion.div>
         </div>
       </section>

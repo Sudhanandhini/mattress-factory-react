@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Image from "next/image"
 import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { contactApi } from '@/lib/api/client';
 import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/ui/AnimatedSection';
+import bg from "../../../images/bg.jpg"
 
 interface FormData {
   firstName: string;
@@ -20,19 +22,19 @@ const contactCards = [
   {
     icon: Phone,
     title: 'Phone',
-    lines: ['+91 81500 11660'],
-    sub: 'Mon - Sat: 9:00 AM - 8:00 PM',
+    lines: ['+91 77606 93333'],
+    sub: 'Mon - Sat: 10:30 AM - 7:00 PM',
   },
   {
     icon: Mail,
     title: 'Email',
-    lines: ['contact@mattressfactory.com'],
+    lines: ['info@mattressfactory.in'],
     sub: 'We\'ll respond within 24 hours',
   },
   {
     icon: MapPin,
     title: 'Address',
-    lines: ['Karumatampatti, Karur M,', 'Karur, Tamil Nadu - 639 002'],
+    lines: ['Sulakshmi Enterprise','No. 29/2 (Old No. 1), Studio Road', 'J.B. Kaval, Near Rajkumar Samadhi', 'Munneshwara Block, Yeshwanthpur', 'Bangalore – 560058', 'Karnataka, India'],
     sub: 'Visit our showroom',
   },
   {
@@ -85,11 +87,10 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen overflow-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-[400px] flex items-center bg-navy-700 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: 'radial-gradient(circle at 70% 50%, rgba(236,72,153,0.15) 0%, transparent 50%)',
-          }} />
+      <section className="relative min-h-[400px] flex items-center overflow-hidden">
+        <div className="absolute inset-0">
+          <Image src={bg} alt="contact background" fill className="object-cover" />
+          <div className="absolute inset-0 bg-navy-700/30" />
         </div>
         <div className="container mx-auto px-4 relative z-10 py-20">
           <motion.div
@@ -115,7 +116,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-lg text-gray-300 max-w-2xl"
+            className="text-lg text-white max-w-2xl"
           >
             Have questions? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
           </motion.p>
@@ -227,12 +228,17 @@ export default function ContactPage() {
             <AnimatedSection direction="left" delay={0.2} className="lg:col-span-2">
               <div className="space-y-6">
                 {/* Map placeholder */}
-                <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl h-64 flex items-center justify-center overflow-hidden shadow-md">
-                  <div className="text-center">
-                    <MapPin className="w-12 h-12 text-accent-400 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">Google Map</p>
-                    <p className="text-gray-400 text-xs">Karur, Tamil Nadu</p>
-                  </div>
+                <div className="rounded-2xl overflow-hidden shadow-md">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m12!1m8!1m3!1d18504.791105067987!2d77.527018!3d13.021601!3m2!1i1024!2i768!4f13.1!2m1!1sMattress%20Factory%20NO-1%2C%20STUDIO%20ROAD%2C%20J.B.KAVAL%2C%20near%20RAJKUMAR%20SAMADHI%2C%20Munneshwara%20Block%2C%20Yeswanthpur%2C%20Bengaluru%2C%20Karnataka%20560058!5e1!3m2!1sen!2sus!4v1773224375694!5m2!1sen!2sus"
+                    width="100%"
+                    height="260"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="w-full"
+                  />
                 </div>
 
                 {/* FAQ Quick */}
