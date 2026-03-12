@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import {
+  sendOrderConfirmedEmail,
+  sendOrderShippedEmail,
+  sendOrderDeliveredEmail,
+  sendOrderCancelledEmail,
+} from '@/lib/email';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -41,6 +47,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const body = await request.json();
     const { status, adminNotes, trackingNumber } = body;
 
+    // Fetch current order + customer details for email
+    const existing = status
+      ? await prisma.order.findUnique({
+          where: { id: params.id },
+          select: {
+            orderNumber: true,
+            trackingNumber: true,
+            user: { select: { email: true, firstName: true, lastName: true } },
+          },
+        })
+      : null;
+
     const updated = await prisma.order.update({
       where: { id: params.id },
       data: {
@@ -53,6 +71,19 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           : undefined,
       },
     });
+
+    // Send status email (non-blocking)
+    if (status && existing?.user) {
+      const { email, firstName, lastName } = existing.user;
+      const name = [firstName, lastName].filter(Boolean).join(' ') || email;
+      const orderNumber = existing.orderNumber;
+      const tracking = trackingNumber ?? existing.trackingNumber;
+
+      if (status === 'CONFIRMED')  sendOrderConfirmedEmail(email, name, orderNumber);
+      if (status === 'SHIPPED')    sendOrderShippedEmail(email, name, orderNumber, tracking);
+      if (status === 'DELIVERED')  sendOrderDeliveredEmail(email, name, orderNumber);
+      if (status === 'CANCELLED')  sendOrderCancelledEmail(email, name, orderNumber);
+    }
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {

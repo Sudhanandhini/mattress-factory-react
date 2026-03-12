@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/ui/AnimatedSection';
 import bg from "../../../images/bg.jpg"
+import about from "../../../images/ab.webp"
 
 /* ════════════════════════ DATA ════════════════════════ */
 
@@ -203,7 +204,7 @@ function BeliefSlider() {
           >
             <div className="text-6xl flex-shrink-0">{beliefSlides[current].icon}</div>
             <div>
-              <p className="text-blue-300 text-sm font-bold uppercase tracking-widest mb-1">{beliefSlides[current].subtitle}</p>
+              <p className="text-[#f0f0f0] text-sm font-bold uppercase tracking-widest mb-1">{beliefSlides[current].subtitle}</p>
               <h3 className="text-white font-extrabold text-2xl mb-3">{beliefSlides[current].title}</h3>
               <p className="text-blue-100 text-base leading-relaxed">{beliefSlides[current].desc}</p>
             </div>
@@ -217,7 +218,7 @@ function BeliefSlider() {
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            className={`h-2 rounded-full transition-all duration-300 ${i === current ? 'w-8 bg-[#1d4ed8]' : 'w-2 bg-gray-300'}`}
+            className={`h-2 rounded-full transition-all duration-300 ${i === current ? 'w-8 bg-[#092f75]/50' : 'w-2 bg-gray-300'}`}
           />
         ))}
       </div>
@@ -242,7 +243,7 @@ export default function AboutPage() {
         </div>
         {/* Glows */}
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-[#092f75]/50 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 w-full px-6 lg:px-20 py-28 max-w-screen-2xl mx-auto">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12">
@@ -253,8 +254,8 @@ export default function AboutPage() {
                 transition={{ duration: 0.5 }}
                 className="inline-flex items-center gap-2 mb-6 bg-white/10 border border-white/20 rounded-full px-5 py-2"
               >
-                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                <span className="text-blue-200 text-sm font-semibold tracking-widest uppercase">About Us</span>
+                <span className="w-2 h-2 rounded-full bg-[#092f75]/50 animate-pulse" />
+                <span className="text-[#f0f0f0] text-sm font-semibold tracking-widest uppercase">About Us</span>
               </motion.div>
 
               <motion.h1
@@ -273,7 +274,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2 }}
-                className="text-blue-200 text-xl leading-relaxed"
+                className="text-[#f0f0f0] text-xl leading-relaxed"
               >
                 Learn what makes MATTRESS FACTORY different and how our passion and vision guide every product we create.
               </motion.p>
@@ -290,11 +291,11 @@ export default function AboutPage() {
                 const Icon = s.icon;
                 return (
                   <div key={i} className="bg-white/10 border border-white/20 rounded-2xl px-6 py-5 text-center backdrop-blur-sm min-w-[140px]">
-                    <Icon className="w-6 h-6 text-blue-300 mx-auto mb-2" />
+                    <Icon className="w-6 h-6 text-[#f0f0f0] mx-auto mb-2" />
                     <div className="text-3xl font-extrabold text-white mb-1">
                       {s.isText ? s.displayText : <AnimatedCounter value={s.value} suffix={s.suffix} />}
                     </div>
-                    <p className="text-blue-300 text-xs font-medium">{s.label}</p>
+                    <p className="text-[#f0f0f0] text-xs font-medium">{s.label}</p>
                   </div>
                 );
               })}
@@ -311,17 +312,17 @@ export default function AboutPage() {
             <AnimatedSection direction="right">
               <div className="relative">
                 {/* Main image block */}
-                <div className="aspect-[4/3] rounded-3xl overflow-hidden bg-[#eff6ff] shadow-2xl flex items-center justify-center">
+                <div className="aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center"
+                style={{backgroundImage: `url(${about.src})`, backgroundSize: "cover", backgroundPosition: "center"}}>
                   <img
                     src="/images/about-factory.jpg"
                     alt="Our Factory"
                     className="w-full h-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-8xl">🏭</div>
-                    <p className="text-[#1d4ed8] font-bold mt-3 text-lg">Our Manufacturing Unit, Karur</p>
-                  </div>
+                  {/* <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <Image src={about} alt="about" />
+                  </div> */}
                 </div>
                 {/* Floating badge top-left */}
                 <motion.div
@@ -332,7 +333,7 @@ export default function AboutPage() {
                   className="absolute -top-6 -left-6 bg-[#0c2461] text-white rounded-2xl px-6 py-4 shadow-2xl"
                 >
                   <p className="text-3xl font-extrabold">5+</p>
-                  <p className="text-blue-300 text-xs font-semibold">Years of Trust</p>
+                  <p className="text-[#f0f0f0] text-xs font-semibold">Years of Trust</p>
                 </motion.div>
                 {/* Floating badge bottom-right */}
                 <motion.div
@@ -340,10 +341,10 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.5 }}
-                  className="absolute -bottom-6 -right-6 bg-[#1d4ed8] text-white rounded-2xl px-6 py-4 shadow-xl"
+                  className="absolute -bottom-6 -right-6 bg-[#f0f0f0] text-white rounded-2xl px-6 py-4 shadow-xl"
                 >
-                  <p className="text-2xl font-extrabold">1078+</p>
-                  <p className="text-blue-200 text-xs font-semibold">Happy Customers</p>
+                  <p className="text-2xl font-extrabold text-black">1078+</p>
+                  <p className="text-black text-xs font-semibold">Happy Customers</p>
                 </motion.div>
               </div>
             </AnimatedSection>
@@ -351,7 +352,7 @@ export default function AboutPage() {
             <AnimatedSection direction="left" delay={0.15}>
               <div>
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-0.5 bg-[#1d4ed8]" />
+                  <div className="w-10 h-0.5 bg-[#092f75]/50" />
                   <p className="text-[#1d4ed8] text-sm font-bold uppercase tracking-widest">Our Story</p>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold text-[#0c2461] leading-tight mb-8">
@@ -370,7 +371,7 @@ export default function AboutPage() {
                 </div>
                 <Link
                   href="/products"
-                  className="inline-flex items-center gap-3 mt-8 bg-[#0c2461] hover:bg-[#1d4ed8] text-white font-bold px-8 py-4 rounded-xl transition-colors text-base"
+                  className="inline-flex items-center gap-3 mt-8 bg-[#0c2461] hover:bg-[#092f75]/50 text-white font-bold px-8 py-4 rounded-xl transition-colors text-base"
                 >
                   Explore Products <ArrowRight className="w-5 h-5" />
                 </Link>
@@ -389,13 +390,13 @@ export default function AboutPage() {
             <div className="lg:col-span-2 lg:sticky lg:top-28">
               <AnimatedSection direction="right">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-0.5 bg-[#1d4ed8]" />
+                  <div className="w-10 h-0.5 bg-[#092f75]/50" />
                   <p className="text-[#1d4ed8] text-sm font-bold uppercase tracking-widest">Our Purpose</p>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold text-[#0c2461] leading-tight mb-6">
                   Mission<br />Statement
                 </h2>
-                <div className="w-16 h-1.5 bg-[#1d4ed8] rounded-full mb-7" />
+                <div className="w-16 h-1.5 bg-[#092f75]/50 rounded-full mb-7" />
                 <p className="text-gray-600 text-lg leading-relaxed mb-8">
                   At Mattress Factory, our mission is simple:{' '}
                   <span className="font-bold text-[#0c2461] italic">"Providing luxury mattress at a budget price"</span>
@@ -437,11 +438,11 @@ export default function AboutPage() {
             <AnimatedSection direction="right">
               <div>
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-0.5 bg-[#1d4ed8]" />
+                  <div className="w-10 h-0.5 bg-[#092f75]/50" />
                   <p className="text-[#1d4ed8] text-sm font-bold uppercase tracking-widest">Core Values</p>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold text-[#0c2461] leading-tight mb-6">Philosophy</h2>
-                <div className="w-16 h-1.5 bg-[#1d4ed8] rounded-full mb-7" />
+                <div className="w-16 h-1.5 bg-[#092f75]/50 rounded-full mb-7" />
                 <p className="text-gray-600 text-lg leading-relaxed mb-3">
                   <strong className="text-[#0c2461]">Nice of you to drop by!</strong>
                 </p>
@@ -489,14 +490,14 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-20">
             <AnimatedSection direction="right">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-0.5 bg-blue-400" />
-                <p className="text-blue-400 text-sm font-bold uppercase tracking-widest">Our Advantage</p>
+                <div className="w-10 h-0.5 bg-[#092f75]/50" />
+                <p className="text-[#f3f4f7] text-sm font-bold uppercase tracking-widest">Our Advantage</p>
               </div>
               <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-6">
                 Best Online Mattress —{' '}
-                <span className="text-blue-300">Eliminating<br />The Middleman</span>
+                <span className="text-[#f0f0f0]">Eliminating<br />The Middleman</span>
               </h2>
-              <div className="w-16 h-1.5 bg-blue-400 rounded-full" />
+              <div className="w-16 h-1.5 bg-[#092f75]/50 rounded-full" />
             </AnimatedSection>
 
             <AnimatedSection direction="left" delay={0.15}>
@@ -525,12 +526,12 @@ export default function AboutPage() {
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                     className="bg-white/10 border border-white/20 rounded-2xl p-8 backdrop-blur-sm hover:bg-white/15 transition-colors group"
                   >
-                    <div className="w-14 h-14 rounded-xl bg-white/15 flex items-center justify-center mb-5 group-hover:bg-[#1d4ed8] transition-colors">
+                    <div className="w-14 h-14 rounded-xl bg-white/15 flex items-center justify-center mb-5 group-hover:bg-[#092f75]/50 transition-colors">
                       <Icon className="w-7 h-7 text-white" />
                     </div>
-                    <span className="text-blue-400 text-xs font-bold uppercase tracking-widest">Step {item.step}</span>
+                    <span className="text-[#f0f0f0] text-xs font-bold uppercase tracking-widest">Step {item.step}</span>
                     <h3 className="text-white font-extrabold text-xl mt-2 mb-3">{item.title}</h3>
-                    <p className="text-blue-200 text-sm leading-relaxed">{item.desc}</p>
+                    <p className="text-[#f0f0f0] text-sm leading-relaxed">{item.desc}</p>
                   </motion.div>
                 </StaggerItem>
               );
@@ -544,12 +545,12 @@ export default function AboutPage() {
         <div className="w-full px-6 lg:px-20 max-w-screen-2xl mx-auto">
           <AnimatedSection className="text-center mb-16">
             <div className="flex items-center gap-3 justify-center mb-5">
-              <div className="w-10 h-0.5 bg-[#1d4ed8]" />
+              <div className="w-10 h-0.5 bg-[#092f75]/50" />
               <p className="text-[#1d4ed8] text-sm font-bold uppercase tracking-widest">Direction</p>
-              <div className="w-10 h-0.5 bg-[#1d4ed8]" />
+              <div className="w-10 h-0.5 bg-[#092f75]/50" />
             </div>
             <h2 className="text-4xl md:text-5xl font-extrabold text-[#0c2461] mb-4">Mission &amp; Vision</h2>
-            <div className="w-16 h-1.5 bg-[#1d4ed8] rounded-full mx-auto" />
+            <div className="w-16 h-1.5 bg-[#092f75]/50 rounded-full mx-auto" />
           </AnimatedSection>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -597,12 +598,12 @@ export default function AboutPage() {
         <div className="w-full px-6 lg:px-20 max-w-screen-2xl mx-auto">
           <AnimatedSection className="text-center mb-16">
             <div className="flex items-center gap-3 justify-center mb-5">
-              <div className="w-10 h-0.5 bg-[#1d4ed8]" />
+              <div className="w-10 h-0.5 bg-[#092f75]/50" />
               <p className="text-[#1d4ed8] text-sm font-bold uppercase tracking-widest">Why Choose Us</p>
-              <div className="w-10 h-0.5 bg-[#1d4ed8]" />
+              <div className="w-10 h-0.5 bg-[#092f75]/50" />
             </div>
             <h2 className="text-4xl md:text-5xl font-extrabold text-[#0c2461] mb-4">What Makes Us Different</h2>
-            <div className="w-16 h-1.5 bg-[#1d4ed8] rounded-full mx-auto mb-5" />
+            <div className="w-16 h-1.5 bg-[#092f75]/50 rounded-full mx-auto mb-5" />
             <p className="text-gray-500 text-xl max-w-xl mx-auto">Thoughtfully made home essentials that balance quality, comfort, and value.</p>
           </AnimatedSection>
 
@@ -632,7 +633,7 @@ export default function AboutPage() {
       {/* ═══════ CTA ═══════ */}
       {/* <section className="py-28 bg-gradient-to-br from-[#0c2461] via-[#1d4ed8] to-[#2563eb] relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 w-96 h-96 bg-blue-400/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
+          <div className="absolute top-0 left-1/2 w-96 h-96 bg-[#092f75]/50/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
         </div>
         <div className="relative z-10 w-full px-6 lg:px-20 max-w-screen-2xl mx-auto text-center">
           <AnimatedSection>

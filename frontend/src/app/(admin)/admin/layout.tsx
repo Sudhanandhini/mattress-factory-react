@@ -9,11 +9,10 @@ import {
   ShoppingCart,
   Users,
   FolderTree,
-  Settings,
+  Tag,
   LogOut,
   Menu,
   X,
-  Bell,
   Search,
 } from 'lucide-react';
 
@@ -22,12 +21,12 @@ interface AdminLayoutProps {
 }
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/admin/dashboard' },
-  { icon: Package, label: 'Products', href: '/admin/products' },
-  { icon: FolderTree, label: 'Categories', href: '/admin/categories' },
-  { icon: ShoppingCart, label: 'Orders', href: '/admin/orders' },
-  { icon: Users, label: 'Users', href: '/admin/users' },
-  { icon: Settings, label: 'Settings', href: '/admin/settings' },
+  { icon: LayoutDashboard, label: 'Dashboard',  href: '/admin/dashboard' },
+  { icon: Package,         label: 'Products',   href: '/admin/products' },
+  { icon: FolderTree,      label: 'Categories', href: '/admin/categories' },
+  { icon: ShoppingCart,    label: 'Orders',     href: '/admin/orders' },
+  { icon: Users,           label: 'Users',      href: '/admin/users' },
+  { icon: Tag,             label: 'Coupons',    href: '/admin/coupons' },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

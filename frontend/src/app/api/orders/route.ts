@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       name, phone, email, address, city, state, pincode, notes,
-      items, subtotal, tax, total,
+      items, subtotal, tax, discount, couponCode, total,
       paymentMethod = 'COD',
       razorpayPaymentId, razorpayOrderId, razorpaySignature,
     } = body;
@@ -91,7 +91,9 @@ export async function POST(request: NextRequest) {
         subtotal,
         tax,
         shippingCharge:    0,
-        discount:          0,
+        discount:          discount || 0,
+        couponCode:        couponCode || null,
+        couponDiscount:    discount   || null,
         total,
         customerNotes:     notes || null,
         items: {
@@ -119,6 +121,13 @@ export async function POST(request: NextRequest) {
       },
       include: { items: true },
     });
+
+    // Record coupon usage so the same user cannot reuse the coupon
+    if (couponCode && tokenData?.sub) {
+      await prisma.couponUsage.create({
+        data: { couponCode, userId: tokenData.sub, orderId: order.id },
+      }).catch(() => {}); // ignore duplicate errors (safety net)
+    }
 
     // Create Payment record
     await prisma.payment.create({

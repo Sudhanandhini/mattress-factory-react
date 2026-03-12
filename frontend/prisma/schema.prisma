@@ -588,6 +588,19 @@ model Coupon {
   @@map("coupons")
 }
 
+model CouponUsage {
+  id         String   @id @default(uuid())
+  couponCode String
+  userId     String
+  orderId    String   @unique
+  createdAt  DateTime @default(now())
+
+  @@unique([couponCode, userId])
+  @@index([couponCode])
+  @@index([userId])
+  @@map("coupon_usages")
+}
+
 // ==================== REVIEW ====================
 
 model Review {
