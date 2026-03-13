@@ -192,7 +192,7 @@ function BeliefSlider() {
   return (
     <div className="relative overflow-hidden rounded-3xl">
       {/* Track */}
-      <div className="relative h-64 md:h-56">
+      <div className="relative h-64 sm:h-56">
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
@@ -200,7 +200,7 @@ function BeliefSlider() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -60 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="absolute inset-0 bg-gradient-to-br from-[#0c2461] to-[#1d4ed8] rounded-3xl p-10 flex items-center gap-8"
+            className="absolute inset-0 bg-gradient-to-br from-[#0c2461] to-[#1d4ed8] rounded-3xl p-6 sm:p-10 flex items-center gap-5 sm:gap-8"
           >
             <div className="text-6xl flex-shrink-0">{beliefSlides[current].icon}</div>
             <div>
@@ -262,7 +262,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.1 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.05] mb-6"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-[1.05] mb-6"
               >
                 A Brand Built on<br />
                 <span className="text-[#092f75] bg-clip-text bg-gradient-to-r from-blue-300 to-blue-100">
@@ -285,12 +285,12 @@ export default function AboutPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.7, delay: 0.3 }}
-              className="grid grid-cols-2 gap-4 flex-shrink-0"
+              className="grid grid-cols-2 gap-3 flex-shrink-0 w-full lg:w-auto"
             >
               {stats.map((s, i) => {
                 const Icon = s.icon;
                 return (
-                  <div key={i} className="bg-white/10 border border-white/20 rounded-2xl px-6 py-5 text-center backdrop-blur-sm min-w-[140px]">
+                  <div key={i} className="bg-white/10 border border-white/20 rounded-2xl px-4 py-4 text-center backdrop-blur-sm">
                     <Icon className="w-6 h-6 text-[#f0f0f0] mx-auto mb-2" />
                     <div className="text-3xl font-extrabold text-white mb-1">
                       {s.isText ? s.displayText : <AnimatedCounter value={s.value} suffix={s.suffix} />}

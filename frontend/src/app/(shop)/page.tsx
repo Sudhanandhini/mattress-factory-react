@@ -15,6 +15,11 @@ import catFoam        from '../../images/4.webp';
 import catLatex       from '../../images/5.jpg';
 import catMemoryFoam  from '../../images/ab.webp';
 
+import slide11 from '../../images/11.png';
+import slide12 from '../../images/12.png';
+import slide13 from '../../images/13.png';
+import slide14 from '../../images/14.png';
+
 /* ─────────────────────────── DATA ─────────────────────────── */
 
 const categories = [
@@ -100,11 +105,10 @@ const faqs = [
 ];
 
 const SLIDE_BADGES = [
- 
-  { badge1: 'Memory Foam',    badge2: 'Deep Sleep',    star: true  },
-  { badge1: 'Spring Support', badge2: 'Ortho Care',    star: false },
-  { badge1: 'Natural Latex',  badge2: 'Eco Friendly',  star: true  },
-  { badge1: 'Euro Top',       badge2: 'Hotel Feel',    star: false },
+  { badge1: 'Memory Foam',    badge2: 'Deep Sleep',    star: true,  fallback: slide11 },
+  { badge1: 'Spring Support', badge2: 'Ortho Care',    star: false, fallback: slide12 },
+  { badge1: 'Natural Latex',  badge2: 'Eco Friendly',  star: true,  fallback: slide13 },
+  { badge1: 'Euro Top',       badge2: 'Hotel Feel',    star: false, fallback: slide14 },
 ];
 
 const sixFeatures = [
@@ -120,22 +124,6 @@ const sixFeatures = [
 
 function HeroSlider() {
   const [current, setCurrent] = useState(0);
-  const [images, setImages] = useState<string[]>([]);
-
-  useEffect(() => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    fetch(`${API_URL}/products?limit=10`)
-      .then(r => r.json())
-      .then(data => {
-        const products: { images?: { url: string }[] }[] = data?.data?.products ?? data?.data ?? [];
-        const imgs = products
-          .map((p) => p.images?.[0]?.url)
-          .filter(Boolean) as string[];
-        if (imgs.length > 0) setImages(imgs.slice(0, SLIDE_BADGES.length));
-      })
-      .catch(() => {/* use fallback */});
-  }, []);
-
   const total = SLIDE_BADGES.length;
 
   useEffect(() => {
@@ -144,10 +132,9 @@ function HeroSlider() {
   }, [total]);
 
   const slide = SLIDE_BADGES[current];
-  const imgSrc = images[current] ?? null;
 
   return (
-    <div className="relative rounded-3xl overflow-hidden bg-[#f5ede8] aspect-[5/4]">
+    <div className="relative rounded-3xl overflow-hidden  aspect-[5/4]">
       {/* Slides */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -158,24 +145,18 @@ function HeroSlider() {
           transition={{ duration: 0.6 }}
           className="absolute inset-0"
         >
-          {imgSrc ? (
-            <img
-              src={imgSrc}
-              alt={slide.badge1}
-              className="w-full h-full object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-              <div className="text-9xl mb-4">🛏️</div>
-              <p className="text-gray-500 font-medium text-lg">{slide.badge1}</p>
-            </div>
-          )}
+          <Image
+            src={slide.fallback}
+            alt={slide.badge1}
+            fill
+            className="object-cover"
+            priority={current === 0}
+          />
         </motion.div>
       </AnimatePresence>
 
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+      {/* <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" /> */}
 
       {/* Star badge top-left */}
       {slide.star && (
@@ -381,7 +362,7 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.1 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#1a1a2e] leading-[1.05] mb-6"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-[#1a1a2e] leading-[1.05] mb-6"
               >
                 Sleep Better.<br />
                 Live Better.
@@ -391,7 +372,7 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2 }}
-                className="text-gray-600 text-xl mb-10 max-w-lg"
+                className="text-gray-600 text-base sm:text-lg md:text-xl mb-10 max-w-lg"
               >
                 Experience hotel-grade luxury without the middleman markup. Engineered in India for optimal spinal alignment and cooling airflow.
               </motion.p>
@@ -482,7 +463,7 @@ export default function HomePage() {
             </div>
           </AnimatedSection>
 
-          <StaggerContainer className="grid grid-cols-3 md:grid-cols-6 gap-5">
+          <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-5">
             {categories.map((cat) => (
               <StaggerItem key={cat.slug}>
                 <Link href={`/products?category=${cat.slug}`}>
@@ -581,7 +562,7 @@ export default function HomePage() {
       </section>
 
       {/* ───── HOW DO WE COMPARE? ───── */}
-      <section className="py-20 bg-[#edf1f7]">
+      {/* <section className="py-20 bg-[#edf1f7]">
         <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
           <AnimatedSection className="text-center mb-14">
             <h2 className="text-4xl md:text-5xl font-extrabold text-[#1a1a2e] mb-4">How Do We Compare?</h2>
@@ -590,7 +571,7 @@ export default function HomePage() {
 
           <AnimatedSection>
             <div className="bg-white rounded-3xl overflow-hidden shadow-sm  mx-auto">
-              {/* Header */}
+             
               <div className="grid grid-cols-4 border-b border-gray-100">
                 <div className="py-6 px-8 font-bold text-[#1a1a2e] text-base">Features</div>
                 <div className="py-6 px-8 font-bold text-[#1a2a6c] text-base border-l border-gray-100">Ortho Pro</div>
@@ -608,10 +589,10 @@ export default function HomePage() {
             </div>
           </AnimatedSection>
         </div>
-      </section>
+      </section> */}
 
       {/* ───── LOVED BY 100,000+ SLEEPERS — SLIDER ───── */}
-      <section className="py-20 bg-white">
+      <section className="py-20  bg-[#edf1f7]">
         <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
           <AnimatedSection className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-extrabold text-[#1a1a2e] mb-4">

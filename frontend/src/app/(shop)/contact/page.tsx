@@ -110,7 +110,7 @@ export default function ContactPage() {
             className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4"
           >
             Get in{' '}
-            <span className="font-cursive italic text-accent-400">Touch</span>
+        Touch
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 30 }}
@@ -228,16 +228,16 @@ export default function ContactPage() {
             <AnimatedSection direction="left" delay={0.2} className="lg:col-span-2">
               <div className="space-y-6">
                 {/* Map placeholder */}
-                <div className="rounded-2xl overflow-hidden shadow-md">
+                <div className="rounded-2xl overflow-hidden shadow-md aspect-video">
                   <iframe
                     src="https://www.google.com/maps/embed?pb=!1m12!1m8!1m3!1d18504.791105067987!2d77.527018!3d13.021601!3m2!1i1024!2i768!4f13.1!2m1!1sMattress%20Factory%20NO-1%2C%20STUDIO%20ROAD%2C%20J.B.KAVAL%2C%20near%20RAJKUMAR%20SAMADHI%2C%20Munneshwara%20Block%2C%20Yeswanthpur%2C%20Bengaluru%2C%20Karnataka%20560058!5e1!3m2!1sen!2sus!4v1773224375694!5m2!1sen!2sus"
                     width="100%"
-                    height="260"
+                    height="100%"
                     style={{ border: 0 }}
                     allowFullScreen
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    className="w-full"
+                    className="w-full h-full"
                   />
                 </div>
 

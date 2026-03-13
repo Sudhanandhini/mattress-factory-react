@@ -396,7 +396,7 @@ export default function ProductsPage() {
               <span className="text-white">Products</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-white">
-              Our <span className="font-cursive italic text-accent-400">Products</span>
+              Our Products
             </h1>
             <p className="text-gray-300 mt-3 text-lg">Explore our full range of premium mattresses</p>
           </motion.div>
@@ -499,7 +499,7 @@ export default function ProductsPage() {
                   initial={{ x: '-100%' }}
                   animate={{ x: 0 }}
                   exit={{ x: '-100%' }}
-                  className="absolute left-0 top-0 bottom-0 w-80 bg-gray-50 p-6 overflow-y-auto"
+                  className="absolute left-0 top-0 bottom-0 w-full max-w-xs bg-gray-50 p-6 overflow-y-auto"
                 >
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-bold text-navy-700">Filters</h2>

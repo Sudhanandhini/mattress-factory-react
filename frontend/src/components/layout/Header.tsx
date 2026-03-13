@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Menu, X, LogIn, LogOut, UserCircle, User, ShoppingBag, Lock } from 'lucide-react';
+import { ShoppingCart, Heart, Menu, X, LogIn, LogOut, UserCircle, User, ShoppingBag, Lock, Shield } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCartStore, useWishlistStore } from '@/store/useStore';
@@ -78,7 +78,7 @@ export function Header() {
     {[...Array(3)].map((_, repeat) => (
       <span key={repeat} className="inline-flex items-center">
         {!mounted || activeCoupons.length === 0 ? (
-          <span className="inline-flex items-center gap-6 px-8 text-sm font-medium tracking-wide">
+          <span className="inline-flex items-center gap-3 md:gap-6 px-4 md:px-8 text-xs md:text-sm font-medium tracking-wide">
             <span>🚚 Free Delivery on Orders Above ₹999</span>
             <span className="text-yellow-300">★</span>
             <span>Premium Quality Mattresses for Better Sleep</span>
@@ -87,7 +87,7 @@ export function Header() {
         ) : activeCoupons.map((c) => {
           const { text, code } = couponToMarquee(c);
           return (
-            <span key={c.code} className="inline-flex items-center gap-6 px-8 text-sm font-medium tracking-wide">
+            <span key={c.code} className="inline-flex items-center gap-3 md:gap-6 px-4 md:px-8 text-xs md:text-sm font-medium tracking-wide">
               <span>🔥 {text}</span>
               <span className="bg-white text-[#1a2a6c] px-2 py-0.5 rounded font-bold text-xs">Code: {code}</span>
               <span className="text-yellow-300">★</span>
@@ -106,12 +106,12 @@ export function Header() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group">
              <div>
-              <Image src={logo} alt="logo" width={300}   />
+              <Image src={logo} alt="logo" width={300} className="w-[160px] md:w-[220px] lg:w-[280px]" />
              </div>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
+            <nav className="hidden lg:flex items-center gap-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -146,9 +146,18 @@ export function Header() {
                 )}
               </Link>
 
+              {/* Admin Icon — always visible, goes to admin login */}
+              <Link
+                href="/admin/login"
+                className="hidden lg:flex items-center justify-center w-9 h-9 rounded-full bg-[#092f75] hover:bg-[#092f75] transition shadow-sm"
+                title="Admin Panel"
+              >
+                <Shield className="w-5 h-5 text-white" />
+              </Link>
+
               {/* User / Auth */}
-              {isLoggedIn() ? (
-                <div className="relative hidden md:block">
+              {mounted && isLoggedIn() ? (
+                <div className="relative hidden lg:block">
                   <button
                     onClick={() => setShowUserMenu(v => !v)}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 transition text-sm font-medium text-gray-700"
@@ -196,20 +205,21 @@ export function Header() {
               ) : (
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="hidden md:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition"
+                  className="hidden lg:flex items-center justify-center w-9 h-9 rounded-full bg-indigo-100 hover:bg-indigo-200 transition"
+                  title="Sign In / Register"
                 >
-                  <LogIn className="w-4 h-4" /> Sign In
+                  <UserCircle className="w-5 h-5 text-indigo-600" />
                 </button>
               )}
 
-              <Link href="/contact" className="hidden md:block">
+              <Link href="/contact" className="hidden lg:block">
                 <Button variant="primary" size="md">Get Quote</Button>
               </Link>
 
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-gray-700 hover:text-navy-700 transition-colors"
+                className="lg:hidden p-2 text-gray-700 hover:text-navy-700 transition-colors"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -225,7 +235,7 @@ export function Header() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="md:hidden bg-white border-t overflow-hidden"
+              className="lg:hidden bg-white border-t overflow-hidden"
             >
               <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
                 {navLinks.map((link, i) => (
@@ -236,7 +246,7 @@ export function Header() {
                   </motion.div>
                 ))}
                 <div className="pt-3 border-t mt-2 space-y-2">
-                  {isLoggedIn() ? (
+                  {mounted && isLoggedIn() ? (
                     <div className="flex items-center justify-between px-4 py-2">
                       <div className="flex items-center gap-2">
                         <UserCircle className="w-5 h-5 text-indigo-500" />

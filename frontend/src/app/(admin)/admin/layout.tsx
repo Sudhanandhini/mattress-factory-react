@@ -1,8 +1,10 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/useAuthStore';
 import {
   LayoutDashboard,
   Package,
@@ -15,7 +17,10 @@ import {
   Menu,
   X,
   Search,
+  Shield,
+  ExternalLink,
 } from 'lucide-react';
+import logo from '@/images/logo.png';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -33,10 +38,34 @@ const menuItems = [
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const logout = useAuthStore(s => s.logout);
+  const user = useAuthStore(s => s.user);
+  const token = useAuthStore(s => s.token);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    if (mounted && (!token || !user || user.role !== 'ADMIN')) {
+      router.replace('/admin/login');
+    }
+  }, [mounted, token, user, router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/admin/login');
+  };
+
+  if (!mounted || !token || !user || user.role !== 'ADMIN') {
+    return null;
+  }
+
+  const adminName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email.split('@')[0];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
@@ -48,54 +77,73 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+          fixed top-0 left-0 z-50 h-full w-64 bg-[#1a2a6c] text-white flex flex-col shadow-xl
+          transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
         `}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <Link href="/admin/dashboard" className="text-2xl font-bold text-primary-600">
-            Admin Panel
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+          <Link href="/admin/dashboard" className="block">
+            <Image src={logo} alt="Mattress Factory" width={140} className="brightness-0 invert w-[110px] lg:w-[140px]" />
           </Link>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-500 hover:text-gray-700"
-          >
-            <X className="w-6 h-6" />
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/70 hover:text-white">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* Admin badge */}
+        <div className="px-5 py-3 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#092f75] flex items-center justify-center">
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white truncate max-w-[140px]">{adminName}</p>
+              <span className="text-[10px] font-medium bg-[#092f75]/20 text-amber-300 px-1.5 py-0.5 rounded-full">Super Admin</span>
+            </div>
+          </div>
+        </div>
+
         {/* Navigation */}
-        <nav className="p-4 space-y-2">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
-
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                  ${
-                    isActive
-                      ? 'bg-primary-50 text-primary-600 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }
-                `}
                 onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+                  isActive
+                    ? 'bg-white/15 text-white'
+                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-5 h-5 flex-shrink-0" />
                 <span>{item.label}</span>
+                {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#092f75]" />}
               </Link>
             );
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
-          <button className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-gray-700 hover:bg-gray-100 transition-colors">
+        {/* View Store + Logout */}
+        <div className="p-3 border-t border-white/10 space-y-1">
+          <Link
+            href="/"
+            target="_blank"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <ExternalLink className="w-5 h-5" />
+            <span>View Store</span>
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             <span>Logout</span>
           </button>
@@ -103,54 +151,70 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <div className="lg:ml-64">
-        {/* Top Bar */}
-        <header className="bg-white shadow-sm sticky top-0 z-30">
-          <div className="flex items-center justify-between px-6 py-4">
-            {/* Mobile Menu Button */}
+      <div className="lg:ml-64 flex flex-col flex-1">
+
+        {/* Top Header */}
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+          <div className="flex items-center justify-between px-6 py-3">
+            {/* Mobile toggle */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5" />
             </button>
 
-            {/* Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-lg mx-4">
+            {/* Page title */}
+            <div className="hidden lg:block">
+              <h1 className="text-sm font-semibold text-gray-800 capitalize">
+                {pathname.split('/').filter(Boolean).slice(1).join(' › ') || 'Dashboard'}
+              </h1>
+            </div>
+
+            {/* Search */}
+            <div className="hidden md:flex flex-1 max-w-sm mx-6">
               <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a2a6c]/30"
                 />
               </div>
             </div>
 
-            {/* Right Side Icons */}
-            <div className="flex items-center gap-4">
-              {/* <button className="relative text-gray-500 hover:text-gray-700">
-                <Bell className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  3
-                </span>
-              </button> */}
-
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  A
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-700">Admin</p>
-                  <p className="text-xs text-gray-500">Super Admin</p>
-                </div>
+            {/* Admin info */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#092f75] flex items-center justify-center shadow-sm">
+                <Shield className="w-4 h-4 text-white" />
+              </div>
+              <div className="hidden md:block">
+                <p className="text-sm font-semibold text-gray-800">{adminName}</p>
+                <p className="text-xs text-amber-600 font-medium">Super Admin</p>
               </div>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="p-6">{children}</main>
+        <main className="p-6 flex-1">{children}</main>
+
+        {/* Footer */}
+        <footer className="bg-white border-t border-gray-200 px-6 py-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <Image src={logo} alt="Mattress Factory" width={100} className="w-[70px] md:w-[100px]" />
+              <span className="text-xs text-gray-400">Admin Panel</span>
+            </div>
+            <p className="text-xs text-gray-400 text-center">
+              © {new Date().getFullYear()} Mattress Factory. All rights reserved. &nbsp;|&nbsp;
+              <Link href="/" className="hover:text-[#1a2a6c] transition-colors">Visit Store</Link>
+            </p>
+            <p className="text-xs text-gray-400">
+              Built by <span className="font-medium text-[#1a2a6c]">Sunsys Technologies</span>
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   );
