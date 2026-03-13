@@ -242,8 +242,8 @@ export default function AboutPage() {
           <div className="absolute inset-0 bg-[#0c2461]/30" />
         </div>
         {/* Glows */}
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-[#092f75]/50 rounded-full blur-3xl pointer-events-none" />
+        {/* <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-[#092f75]/50 rounded-full blur-3xl pointer-events-none" /> */}
 
         <div className="relative z-10 w-full px-6 lg:px-20 py-28 max-w-screen-2xl mx-auto">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12">
@@ -254,7 +254,7 @@ export default function AboutPage() {
                 transition={{ duration: 0.5 }}
                 className="inline-flex items-center gap-2 mb-6 bg-white/10 border border-white/20 rounded-full px-5 py-2"
               >
-                <span className="w-2 h-2 rounded-full bg-[#092f75]/50 animate-pulse" />
+                {/* <span className="w-2 h-2 rounded-full bg-[#092f75]/50 animate-pulse" /> */}
                 <span className="text-[#f0f0f0] text-sm font-semibold tracking-widest uppercase">About Us</span>
               </motion.div>
 
@@ -356,8 +356,7 @@ export default function AboutPage() {
                   <p className="text-[#1d4ed8] text-sm font-bold uppercase tracking-widest">Our Story</p>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold text-[#0c2461] leading-tight mb-8">
-                  From Karur to Every<br />Home in <span className="text-[#1d4ed8]">India</span>
-                </h2>
+                  From Karur to Every<br />Home in India </h2>
                 <div className="space-y-5 text-gray-600 text-lg leading-relaxed">
                   <p>
                     Born in the heart of Karur, Tamil Nadu — India's textile capital — MATTRESS FACTORY brings three generations of weaving excellence to every product it creates.

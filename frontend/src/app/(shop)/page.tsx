@@ -1,21 +1,29 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, ArrowRight, ChevronDown, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/ui/AnimatedSection';
 import { FeaturedProducts } from '@/components/product/FeaturedProducts';
+
+import catCoir       from '../../images/1.jpg';
+import catSpring      from '../../images/2.webp';
+import catEuroTop     from '../../images/3.jpg';
+import catFoam        from '../../images/4.webp';
+import catLatex       from '../../images/5.jpg';
+import catMemoryFoam  from '../../images/ab.webp';
 
 /* ─────────────────────────── DATA ─────────────────────────── */
 
 const categories = [
-  { name: 'Coir', slug: 'coir-mattress', image: '/images/categories/coir.jpg' },
-  { name: 'Bonnell Spring', slug: 'spring-mattress', image: '/images/categories/spring.jpg' },
-  { name: 'Euro Top', slug: 'euro-top-mattress', image: '/images/categories/eurotop.jpg' },
-  { name: 'Foam', slug: 'foam-mattress', image: '/images/categories/foam.jpg' },
-  { name: 'Latex Foam', slug: 'latex-foam-mattress', image: '/images/categories/latex.jpg' },
-  { name: 'Memory Foam', slug: 'memory-foam-mattress', image: '/images/categories/memory-foam.jpg' },
+  { name: 'Coir',          slug: 'coir-mattress',         image: catCoir      },
+  { name: 'Bonnell Spring',slug: 'spring-mattress',        image: catSpring    },
+  { name: 'Euro Top',      slug: 'euro-top-mattress',      image: catEuroTop   },
+  { name: 'Foam',          slug: 'foam-mattress',          image: catFoam      },
+  { name: 'Latex Foam',    slug: 'latex-foam-mattress',    image: catLatex     },
+  { name: 'Memory Foam',   slug: 'memory-foam-mattress',   image: catMemoryFoam},
 ];
 
 const heroFeatures = [
@@ -40,7 +48,7 @@ const testimonials = [
     rating: 5,
     text: '"The Ortho mattress is a life-changer. My chronic back pain disappeared within a week. Best investment for my health!"',
     initials: 'PS',
-    color: 'from-rose-400 to-rose-600',
+    color: 'from-[#092f75] to-[#092f75]',
   },
   {
     name: 'Rahul Mehta',
@@ -48,7 +56,7 @@ const testimonials = [
     rating: 5,
     text: '"Ordering was seamless and delivery happened on time. The factory-direct price is unbeatable for this quality."',
     initials: 'RM',
-    color: 'from-blue-400 to-blue-600',
+    color: 'from-[#092f75] to-[#092f75]',
   },
   {
     name: 'Ananya Gupta',
@@ -56,7 +64,7 @@ const testimonials = [
     rating: 5,
     text: '"Love the edge support. It feels very premium and hotel-like. The 100-night trial gave me the confidence to buy."',
     initials: 'AG',
-    color: 'from-amber-400 to-amber-600',
+    color: 'from-[#092f75] to-[#092f75]',
   },
   {
     name: 'Karthik Reddy',
@@ -64,7 +72,7 @@ const testimonials = [
     rating: 5,
     text: '"Excellent quality and super fast delivery. The mattress feels exactly like a luxury hotel bed. Very happy!"',
     initials: 'KR',
-    color: 'from-green-400 to-green-600',
+    color: 'from-[#092f75] to-[#092f75]',
   },
   {
     name: 'Meena Iyer',
@@ -72,7 +80,7 @@ const testimonials = [
     rating: 5,
     text: '"The memory foam contours perfectly to my body. I haven\'t slept this well in years. Worth every rupee!"',
     initials: 'MI',
-    color: 'from-purple-400 to-purple-600',
+    color: 'from-[#092f75] to-[#092f75]',
   },
 ];
 
@@ -91,6 +99,14 @@ const faqs = [
   },
 ];
 
+const SLIDE_BADGES = [
+ 
+  { badge1: 'Memory Foam',    badge2: 'Deep Sleep',    star: true  },
+  { badge1: 'Spring Support', badge2: 'Ortho Care',    star: false },
+  { badge1: 'Natural Latex',  badge2: 'Eco Friendly',  star: true  },
+  { badge1: 'Euro Top',       badge2: 'Hotel Feel',    star: false },
+];
+
 const sixFeatures = [
   { icon: '💨', title: 'Zero-Heat Tech', desc: 'Advanced open-cell structure ensures continuous airflow for sweat-free nights.' },
   { icon: '✨', title: 'Hypoallergenic', desc: 'Certified fabric treatment that repels dust mites and allergens effectively.' },
@@ -99,6 +115,102 @@ const sixFeatures = [
   { icon: '🛡️', title: 'No Motion Transfer', desc: 'Move without waking your partner, thanks to isolated pocket spring technology.' },
   { icon: '🏅', title: 'Best For Back Health', desc: 'Multi-zone support designed with orthopedists for spine alignment.' },
 ];
+
+/* ─────────────────────────── HERO SLIDER ─────────────────────────── */
+
+function HeroSlider() {
+  const [current, setCurrent] = useState(0);
+  const [images, setImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    fetch(`${API_URL}/products?limit=10`)
+      .then(r => r.json())
+      .then(data => {
+        const products: { images?: { url: string }[] }[] = data?.data?.products ?? data?.data ?? [];
+        const imgs = products
+          .map((p) => p.images?.[0]?.url)
+          .filter(Boolean) as string[];
+        if (imgs.length > 0) setImages(imgs.slice(0, SLIDE_BADGES.length));
+      })
+      .catch(() => {/* use fallback */});
+  }, []);
+
+  const total = SLIDE_BADGES.length;
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrent(p => (p + 1) % total), 3500);
+    return () => clearInterval(timer);
+  }, [total]);
+
+  const slide = SLIDE_BADGES[current];
+  const imgSrc = images[current] ?? null;
+
+  return (
+    <div className="relative rounded-3xl overflow-hidden bg-[#f5ede8] aspect-[5/4]">
+      {/* Slides */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={current}
+          initial={{ opacity: 0, scale: 1.04 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.6 }}
+          className="absolute inset-0"
+        >
+          {imgSrc ? (
+            <img
+              src={imgSrc}
+              alt={slide.badge1}
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+              <div className="text-9xl mb-4">🛏️</div>
+              <p className="text-gray-500 font-medium text-lg">{slide.badge1}</p>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+
+      {/* Star badge top-left */}
+      {slide.star && (
+        <div className="absolute top-5 left-5 bg-yellow-400 text-yellow-900 rounded-full w-10 h-10 flex items-center justify-center text-lg shadow-md">
+          ★
+        </div>
+      )}
+
+      {/* Bottom-left badge */}
+      <div className="absolute bottom-12 left-5">
+        <span className="bg-white/90 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-full shadow-md">
+          {slide.badge2}
+        </span>
+      </div>
+
+      {/* Bottom-right badge */}
+      <div className="absolute bottom-12 right-5">
+        <span className="bg-[#092f75] text-white text-sm font-semibold px-4 py-2 rounded-full shadow-md">
+          {slide.badge1}
+        </span>
+      </div>
+
+      {/* Dot indicators */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        {SLIDE_BADGES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`rounded-full transition-all duration-300 ${i === current ? 'bg-white w-5 h-2.5' : 'bg-white/50 w-2.5 h-2.5'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ─────────────────────────── FAQ ITEM ─────────────────────────── */
 
@@ -237,8 +349,20 @@ export default function HomePage() {
     <div className="min-h-screen overflow-hidden">
 
       {/* ───── HERO ───── */}
-      <section className="relative bg-white overflow-hidden">
-        <div className="w-full px-6 lg:px-16 py-16 lg:py-20 max-w-screen-2xl mx-auto">
+      <section className="relative bg-[#f0f0f0] overflow-hidden">
+        {/* Large decorative circle behind the slider */}
+        <div
+          className="absolute right-[8%] top-1/2 -translate-y-1/2 w-[44vw] h-[44vw] max-w-[500px] max-h-[500px] rounded-full bg-rose-100/60 pointer-events-none hidden lg:block"
+          style={{ zIndex: 0 }}
+        />
+        {/* Bottom wave */}
+        <div className="absolute bottom-0 left-0 w-full pointer-events-none" style={{ zIndex: 1 }}>
+          <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="w-full h-[100px]">
+            <path fill="#ffffff" d="M0,40 C240,70 480,10 720,40 C960,70 1200,10 1440,40 L1440,70 L0,70 Z"/>
+          </svg>
+        </div>
+
+        <div className="relative w-full px-6 lg:px-16 py-16 lg:py-20 max-w-screen-2xl mx-auto" style={{ zIndex: 2 }}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left */}
             <div>
@@ -309,34 +433,24 @@ export default function HomePage() {
               </motion.div>
             </div>
 
-            {/* Right — hero image */}
+            {/* Right — hero image slider */}
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
               className="hidden lg:block relative"
             >
-              <div className="relative rounded-3xl overflow-hidden bg-[#f5ede8] aspect-[5/4] flex items-center justify-center">
-                <img
-                  src="/images/hero-mattress.jpg"
-                  alt="Premium Mattress"
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 pointer-events-none">
-                  <div className="text-9xl mb-4">🛏️</div>
-                  <p className="text-gray-500 font-medium text-lg">Premium Mattress Collection</p>
-                </div>
-              </div>
+              <HeroSlider />
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* ───── HERO FEATURE STRIP ───── */}
-      <section className="bg-gray-50 border-y border-gray-100">
+      <section className=" bg-white">
         <div className="w-full max-w-screen-2xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-200">
+          <div className="grid grid-cols-2 md:grid-cols-4 ">
+           
             {heroFeatures.map((f, i) => (
               <motion.div
                 key={f.title}
@@ -346,6 +460,7 @@ export default function HomePage() {
                 transition={{ delay: i * 0.1 }}
                 className="flex flex-col items-center text-center py-10 px-6 gap-3"
               >
+          
                 <span className="text-4xl mb-1">{f.icon}</span>
                 <p className="font-bold text-[#1a1a2e] text-base">{f.title}</p>
                 <p className="text-sm text-gray-500 leading-snug">{f.desc}</p>
@@ -372,16 +487,13 @@ export default function HomePage() {
               <StaggerItem key={cat.slug}>
                 <Link href={`/products?category=${cat.slug}`}>
                   <div className="group flex flex-col items-center gap-3 cursor-pointer">
-                    <div className="w-full aspect-square rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center group-hover:shadow-md transition-shadow">
-                      <img
+                    <div className="relative w-full aspect-square rounded-2xl bg-gray-100 overflow-hidden group-hover:shadow-md transition-shadow">
+                      <Image
                         src={cat.image}
                         alt={cat.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const el = e.target as HTMLImageElement;
-                          el.style.display = 'none';
-                          if (el.parentElement) el.parentElement.innerHTML = `<div class="text-4xl">🛏️</div>`;
-                        }}
+                        fill
+                        sizes="(max-width: 768px) 33vw, 16vw"
+                        style={{ objectFit: 'cover' }}
                       />
                     </div>
                     <p className="text-sm font-semibold text-[#1a1a2e] text-center group-hover:text-[#1a2a6c]">{cat.name}</p>
@@ -397,9 +509,18 @@ export default function HomePage() {
       <section className="py-16 bg-gray-50">
         <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
           <AnimatedSection className="mb-10">
-            <p className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-2">Bestsellers</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a2e]">Find Your Perfect Match</h2>
-            <p className="text-gray-500 text-lg mt-2">Every sleeper is different. Discover the collection tailored to your specific comfort needs.</p>
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-2">Bestsellers</p>
+                <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a2e]">Find Your Perfect Match</h2>
+                <p className="text-gray-500 text-lg mt-2">Every sleeper is different. Discover the collection tailored to your specific comfort needs.</p>
+              </div>
+              <Link href="/products" className="flex-shrink-0">
+                <button className="flex items-center gap-2 bg-[#1a2a6c] hover:bg-[#0f1d56] text-white font-semibold px-7 py-3 rounded-lg text-sm transition-colors">
+                  View More <ArrowRight className="w-4 h-4" />
+                </button>
+              </Link>
+            </div>
           </AnimatedSection>
           <FeaturedProducts />
         </div>
@@ -409,28 +530,29 @@ export default function HomePage() {
       <section className="py-12 bg-white">
         <div className="w-full px-6 lg:px-16 max-w-screen-2xl mx-auto">
           <AnimatedSection>
-            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#dce8f5] via-[#e8f0fb] to-[#f0f4fb] min-h-[260px] flex items-center">
-              <span className="absolute top-5 left-[40%] text-4xl opacity-50 rotate-12 select-none">🍂</span>
-              <span className="absolute top-10 right-[30%] text-3xl opacity-30 -rotate-12 select-none">🍂</span>
-              <span className="absolute bottom-5 right-[38%] text-2xl opacity-25 rotate-45 select-none">🍂</span>
+            <div className="relative rounded-3xl overflow-hidden min-h-[260px] flex items-center">
+              {/* Full background image */}
+              <Image
+                src={catLatex}
+                alt="Festive Sale"
+                fill
+                style={{ objectFit: 'cover', objectPosition: 'center' }}
+                priority
+              />
+              {/* Dark overlay so text is readable */}
+              <div className="absolute inset-0 bg-black/50" />
+
+              {/* Content */}
               <div className="relative z-10 px-12 py-12 w-full md:w-1/2">
-                <h2 className="text-5xl md:text-6xl font-extrabold text-[#1a1a2e] mb-2">Festive Sale</h2>
-                <p className="text-2xl md:text-3xl font-semibold text-gray-700 mb-6">
-                  Up to <span className="font-extrabold text-[#1a1a2e]">50% OFF</span>
+                <h2 className="text-5xl md:text-6xl font-extrabold text-white mb-2">Festive Sale</h2>
+                <p className="text-2xl md:text-3xl font-semibold text-white/90 mb-6">
+                  Up to <span className="font-extrabold text-yellow-300">50% OFF</span>
                 </p>
                 <Link href="/products">
-                  <button className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-9 py-3.5 rounded-full text-base transition-colors shadow-md">
+                  <button className="bg-white hover:bg-gray-100 text-[#1a2a6c] font-semibold px-9 py-3.5 rounded-full text-base transition-colors shadow-md">
                     Shop Now
                   </button>
                 </Link>
-              </div>
-              <div className="hidden md:block absolute right-0 top-0 h-full w-1/2">
-                <img
-                  src="/images/banner-bedroom.jpg"
-                  alt="Festive Sale"
-                  className="w-full h-full object-cover object-left"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
               </div>
             </div>
           </AnimatedSection>
@@ -555,14 +677,14 @@ export default function HomePage() {
       </section>
 
       {/* ───── FLOATING EXPERT ADVICE BUTTON ───── */}
-      <div className="fixed bottom-8 right-6 z-50">
+      {/* <div className="fixed bottom-8 right-6 z-50">
         <Link href="/contact">
           <button className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3.5 rounded-full shadow-xl text-base transition-colors">
             <Phone className="w-5 h-5" />
             Expert Advice
           </button>
         </Link>
-      </div>
+      </div> */}
 
     </div>
   );

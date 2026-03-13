@@ -10,6 +10,7 @@ import {
   Users,
   FolderTree,
   Tag,
+  Globe,
   LogOut,
   Menu,
   X,
@@ -27,6 +28,7 @@ const menuItems = [
   { icon: ShoppingCart,    label: 'Orders',     href: '/admin/orders' },
   { icon: Users,           label: 'Users',      href: '/admin/users' },
   { icon: Tag,             label: 'Coupons',    href: '/admin/coupons' },
+  { icon: Globe,           label: 'SEO',        href: '/admin/seo' },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

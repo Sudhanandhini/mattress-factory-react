@@ -18,20 +18,46 @@ const navLinks = [
   { label: 'Contact', href: '/contact' },
 ];
 
+type ActiveCoupon = {
+  code: string;
+  description: string | null;
+  type: 'PERCENTAGE' | 'FIXED';
+  value: string | number;
+  minOrderValue: string | number | null;
+};
+
+function couponToMarquee(c: ActiveCoupon): { text: string; code: string } {
+  const val = parseFloat(String(c.value));
+  const discount = c.type === 'PERCENTAGE' ? `${val}% OFF` : `₹${val.toLocaleString('en-IN')} OFF`;
+  const min = c.minOrderValue ? ` on orders above ₹${parseFloat(String(c.minOrderValue)).toLocaleString('en-IN')}` : '';
+  const text = c.description || `Flash Sale: Get Extra ${discount}${min}!`;
+  return { text, code: c.code };
+}
+
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled]             = useState(false);
   const [showAuthModal, setShowAuthModal]   = useState(false);
   const [showUserMenu, setShowUserMenu]     = useState(false);
+  const [activeCoupons, setActiveCoupons]   = useState<ActiveCoupon[]>([]);
+  const [mounted, setMounted]               = useState(false);
 
   const cartCount     = useCartStore(s => s.totalItems());
   const wishlistCount = useWishlistStore(s => s.items.length);
   const { user, isLoggedIn, logout } = useAuthStore();
 
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/coupons/active').then(r => r.json()).then(j => {
+      if (j.success) setActiveCoupons(Array.isArray(j.data) ? j.data : []);
+    }).catch(() => {});
   }, []);
 
   const displayName = user
@@ -49,14 +75,27 @@ export function Header() {
 
 <div className="bg-[#1a2a6c] text-white py-2 overflow-hidden">
   <div className="flex whitespace-nowrap animate-marquee">
-    {[...Array(4)].map((_, i) => (
-      <span key={i} className="inline-flex items-center gap-6 px-8 text-sm font-medium tracking-wide">
-        <span>🔥 Flash Sale: Get Extra 10% OFF + Free Pillows on All Ortho Mattresses!</span>
-        <span className="bg-white text-[#1a2a6c] px-2 py-0.5 rounded font-bold text-xs">Code: SLEEP10</span>
-        <span className="text-yellow-300">★</span>
-        <span>Free Delivery on Orders Above ₹999</span>
-        <span className="text-yellow-300">★</span>
-       
+    {[...Array(3)].map((_, repeat) => (
+      <span key={repeat} className="inline-flex items-center">
+        {!mounted || activeCoupons.length === 0 ? (
+          <span className="inline-flex items-center gap-6 px-8 text-sm font-medium tracking-wide">
+            <span>🚚 Free Delivery on Orders Above ₹999</span>
+            <span className="text-yellow-300">★</span>
+            <span>Premium Quality Mattresses for Better Sleep</span>
+            <span className="text-yellow-300">★</span>
+          </span>
+        ) : activeCoupons.map((c) => {
+          const { text, code } = couponToMarquee(c);
+          return (
+            <span key={c.code} className="inline-flex items-center gap-6 px-8 text-sm font-medium tracking-wide">
+              <span>🔥 {text}</span>
+              <span className="bg-white text-[#1a2a6c] px-2 py-0.5 rounded font-bold text-xs">Code: {code}</span>
+              <span className="text-yellow-300">★</span>
+              <span>Free Delivery on Orders Above ₹999</span>
+              <span className="text-yellow-300">★</span>
+            </span>
+          );
+        })}
       </span>
     ))}
   </div>
@@ -90,7 +129,7 @@ export function Header() {
               {/* Wishlist */}
               <Link href="/wishlist" className="relative p-2 text-gray-700 hover:text-red-500 transition-colors">
                 <Heart className="w-8 h-8" />
-                {wishlistCount > 0 && (
+                {mounted && wishlistCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
                     {wishlistCount}
                   </span>
@@ -100,9 +139,11 @@ export function Header() {
               {/* Cart */}
               <Link href="/cart" className="relative p-2 text-gray-700 hover:text-navy-700 transition-colors">
                 <ShoppingCart className="w-8 h-8" />
-                <span className="absolute -top-0.5 -right-0.5 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                  {cartCount}
-                </span>
+                {mounted && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
 
               {/* User / Auth */}

@@ -176,6 +176,11 @@ model Product {
   metaTitle       String?
   metaDescription String?       @db.Text
   metaKeywords    String?
+  ogTitle         String?
+  ogDescription   String?       @db.Text
+  ogImage         String?
+  robotsIndex     Boolean       @default(true)
+  robotsFollow    Boolean       @default(true)
 
   // Status & Visibility
   status          ProductStatus @default(ACTIVE)
@@ -651,6 +656,36 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@map("notifications")
+}
+
+// ==================== PAGE SEO ====================
+
+model PageSeo {
+  id            String   @id @default(uuid())
+  pageSlug      String   @unique  // e.g. "home", "about", "products"
+  pageLabel     String             // Display name in admin, e.g. "Home Page"
+
+  // Meta
+  title         String?
+  description   String?  @db.Text
+  keywords      String?  @db.Text
+
+  // Open Graph overrides
+  ogTitle       String?
+  ogDescription String?  @db.Text
+  ogImage       String?
+
+  // Robots
+  robotsIndex   Boolean  @default(true)
+  robotsFollow  Boolean  @default(true)
+
+  // Canonical
+  canonicalUrl  String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("page_seo")
 }
 
 // ==================== SETTINGS ====================

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -82,6 +83,7 @@ function FilterSection({
 }
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -96,10 +98,20 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 9;
 
   useEffect(() => {
     categoryApi.getAll().then((res) => setCategories(res.data || res)).catch(console.error);
   }, []);
+
+  // Auto-select category from URL param ?category=slug
+  useEffect(() => {
+    const slug = searchParams.get('category');
+    if (!slug || categories.length === 0) return;
+    const match = categories.find((c) => c.slug === slug);
+    if (match) setSelectedCategory(match.name);
+  }, [searchParams, categories]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -187,6 +199,7 @@ export default function ProductsPage() {
     else if (sortBy === 'rating') result.sort((a, b) => (b.avgRating || 0) - (a.avgRating || 0));
 
     setFilteredProducts(result);
+    setCurrentPage(1);
   }, [selectedCategory, selectedPriceRange, sortBy, searchTerm, selectedSizes, selectedColors, selectedThickness, selectedDimensions, products]);
 
   const clearFilters = () => {
@@ -512,25 +525,59 @@ export default function ProductsPage() {
                   <Button onClick={() => window.location.reload()}>Retry</Button>
                 </AnimatedSection>
               ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredProducts.map((product, index) => (
-                    <ProductCard key={product.id} product={product} index={index} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredProducts
+                      .slice((currentPage - 1) * PRODUCTS_PER_PAGE, currentPage * PRODUCTS_PER_PAGE)
+                      .map((product, index) => (
+                        <ProductCard key={product.id} product={product} index={index} />
+                      ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {filteredProducts.length > PRODUCTS_PER_PAGE && (
+                    <div className="flex items-center justify-center gap-2 mt-12">
+                      {/* Prev */}
+                      <button
+                        onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={currentPage === 1}
+                        className="w-10 h-10 rounded-full bg-white text-gray-600 font-semibold text-sm border border-gray-200 hover:border-accent-500 hover:text-accent-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        ‹
+                      </button>
+
+                      {/* Page numbers */}
+                      {Array.from({ length: Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                          className={`w-10 h-10 rounded-full font-semibold text-sm transition-colors ${
+                            currentPage === page
+                              ? 'bg-accent-500 text-white'
+                              : 'bg-white text-gray-600 border border-gray-200 hover:border-accent-500 hover:text-accent-500'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+
+                      {/* Next */}
+                      <button
+                        onClick={() => { setCurrentPage(p => Math.min(Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE), p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={currentPage === Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE)}
+                        className="w-10 h-10 rounded-full bg-white text-gray-600 font-semibold text-sm border border-gray-200 hover:border-accent-500 hover:text-accent-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        ›
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <AnimatedSection className="text-center py-20">
                   <div className="text-6xl mb-4">&#128533;</div>
                   <p className="text-gray-600 mb-4 text-lg">No products found matching your criteria</p>
                   <Button onClick={clearFilters}>Clear Filters</Button>
                 </AnimatedSection>
-              )}
-
-              {filteredProducts.length > 0 && (
-                <div className="flex items-center justify-center gap-2 mt-12">
-                  <button className="w-10 h-10 rounded-full bg-accent-500 text-white font-semibold text-sm">1</button>
-                  <button className="w-10 h-10 rounded-full bg-white text-gray-600 font-semibold text-sm border border-gray-200 hover:border-accent-500 hover:text-accent-500 transition-colors">2</button>
-                  <button className="w-10 h-10 rounded-full bg-white text-gray-600 font-semibold text-sm border border-gray-200 hover:border-accent-500 hover:text-accent-500 transition-colors">3</button>
-                </div>
               )}
             </div>
           </div>
