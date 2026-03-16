@@ -17,11 +17,12 @@ const quickLinks = [
 ];
 
 const categories = [
-  { label: 'Bedsheets', href: '/products?category=bedsheets' },
-  { label: 'Quilts', href: '/products?category=quilts' },
-  { label: 'Mattresses', href: '/products?category=mattresses' },
-  { label: 'Pillows', href: '/products?category=pillows' },
-  { label: 'Bed Frames', href: '/products?category=bed-frames' },
+  { label: 'Coir', href: '/products?category=coir-mattress' },
+  { label: 'Bonnell Spring', href: '/products?category=spring-mattress' },
+  { label: 'Euro Top', href: '/products?category=euro-top-mattress' },
+  { label: 'Foam', href: '/products?category=foam-mattress' },
+  { label: 'Latex Foam', href: '/products?category=latex-foam-mattress' },
+  { label: 'Memory Foam', href: '/products?category=memory-foam-mattress' },
 ];
 
 const socialLinks = [
@@ -86,7 +87,7 @@ export function Footer() {
 
           {/* Categories */}
           <div>
-            <h4 className="text-accent-400 font-semibold text-lg mb-5">Categories</h4>
+            <h4 className="text-accent-400 font-semibold text-lg mb-5">Explore Categories</h4>
             <ul className="space-y-3">
               {categories.map((cat) => (
                 <li key={cat.href}>
@@ -161,7 +162,7 @@ Karnataka, India</p>
               <Link href="/terms" className="hover:text-accent-500 transition-colors">Terms &amp; Conditions</Link>
             </div>
             <p>
-              Developed with{' '}
+              Developed by{' '}
               <a href="https://sunsystechnologies.com" target="_blank" rel="noopener noreferrer" className="transition-colors">
                 Sunsys Technologies
               </a>

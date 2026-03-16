@@ -356,17 +356,22 @@ export default function AboutPage() {
                   <p className="text-[#1d4ed8] text-sm font-bold uppercase tracking-widest">Our Story</p>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-extrabold text-[#0c2461] leading-tight mb-8">
-                  From Karur to Every<br />Home in India </h2>
+                  Premium Mattress <br />Manufacturing </h2>
                 <div className="space-y-5 text-gray-600 text-lg leading-relaxed">
                   <p>
-                    Born in the heart of Karur, Tamil Nadu — India's textile capital — MATTRESS FACTORY brings three generations of weaving excellence to every product it creates.
+                   At our mattress factory, we focus on crafting high-quality mattresses designed for comfort, durability, and healthy sleep.
+                    Using advanced manufacturing techniques and carefully selected materials, every mattress is built to support the body and improve sleep quality. 
+                
+
                   </p>
                   <p>
-                    From carefully sourced 100% cotton fabrics to our meticulous finishing processes, every detail is a commitment to the craft. Our team of skilled artisans combines traditional techniques with modern innovation.
+                  Our commitment to precision and quality ensures that each product meets the highest standards.
+
+Our production process combines modern technology with skilled craftsmanship. 
+                    
                   </p>
-                  <p>
-                    Today, we deliver premium quality home furnishings across India, making comfort accessible to every household.
-                  </p>
+                  <p>From foam cutting and spring assembly to stitching and finishing, every stage is handled with strict quality control.
+ This allows us to create mattresses that provide excellent support, pressure relief, and long-lasting performance for different sleeping preferences.</p>
                 </div>
                 <Link
                   href="/products"
