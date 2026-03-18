@@ -185,9 +185,9 @@ export function ProductForm({
     onImagesChange(images.map((img, idx) => idx === i ? { ...img, file, preview, uploading: true, url: '' } : img));
     try {
       const url = await uploadFile(file);
-      onImagesChange(prev => prev.map((img, idx) => idx === i ? { ...img, url, uploading: false } : img));
+      onImagesChange(images.map((img, idx) => idx === i ? { ...img, url, uploading: false } : img));
     } catch (err: any) {
-      onImagesChange(prev => prev.map((img, idx) => idx === i ? { ...img, uploading: false, file: null, preview: '', url: '' } : img));
+      onImagesChange(images.map((img, idx) => idx === i ? { ...img, uploading: false, file: null, preview: '', url: '' } : img));
     }
   };
 
@@ -208,9 +208,9 @@ export function ProductForm({
     onFreebiesChange(freebies.map((f, idx) => idx === i ? { ...f, file, preview, uploading: true, image: '' } : f));
     try {
       const url = await uploadFile(file);
-      onFreebiesChange(prev => prev.map((f, idx) => idx === i ? { ...f, image: url, uploading: false } : f));
+      onFreebiesChange(freebies.map((f, idx) => idx === i ? { ...f, image: url, uploading: false } : f));
     } catch {
-      onFreebiesChange(prev => prev.map((f, idx) => idx === i ? { ...f, uploading: false, file: null, preview: '', image: '' } : f));
+      onFreebiesChange(freebies.map((f, idx) => idx === i ? { ...f, uploading: false, file: null, preview: '', image: '' } : f));
     }
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -82,7 +82,7 @@ function FilterSection({
   );
 }
 
-export default function ProductsPage() {
+function ProductsPage() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -584,5 +584,13 @@ export default function ProductsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function ProductsPageWrapper() {
+  return (
+    <Suspense>
+      <ProductsPage />
+    </Suspense>
   );
 }

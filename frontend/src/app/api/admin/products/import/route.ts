@@ -65,11 +65,11 @@ export async function POST(request: NextRequest) {
     });
 
     // Resolve ID column name (may have BOM prefix)
-    const firstRowKeys = records.length > 0 ? Object.keys(records[0]) : [];
+    const firstRowKeys = records.length > 0 ? Object.keys(records[0] as object) : [];
     const idCol = firstRowKeys.find((k: string) => k.replace(/^\uFEFF/, '') === 'ID') || 'ID';
 
-    const parentProducts = records.filter((r: any) => r['Type'] === 'variable' || r['Type'] === 'simple');
-    const variations = records.filter((r: any) => r['Type'] === 'variation');
+    const parentProducts: any[] = records.filter((r: any) => r['Type'] === 'variable' || r['Type'] === 'simple');
+    const variations: any[] = records.filter((r: any) => r['Type'] === 'variation');
 
     // --- Step 1: Categories ---
     const allCategoryNames = new Set<string>();

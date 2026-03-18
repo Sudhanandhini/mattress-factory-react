@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -27,7 +27,7 @@ const SHIPPING = 0;
 
 type PaymentMethod = 'COD' | 'RAZORPAY';
 
-export default function CheckoutPage() {
+function CheckoutPage() {
   const searchParams  = useSearchParams();
   const router        = useRouter();
   const source        = searchParams.get('source'); // 'buynow' or null (cart)
@@ -671,5 +671,13 @@ export default function CheckoutPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function CheckoutPageWrapper() {
+  return (
+    <Suspense>
+      <CheckoutPage />
+    </Suspense>
   );
 }
