@@ -1,13 +1,17 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+export { API_URL };
 
 // Product API calls
 export const productApi = {
-  getAll: async (params?: { category?: string; search?: string; sort?: string }) => {
+  getAll: async (params?: { category?: string; search?: string; sort?: string; featured?: string; limit?: number }) => {
     try {
       const queryString = new URLSearchParams();
       if (params?.category) queryString.append('category', params.category);
       if (params?.search) queryString.append('search', params.search);
       if (params?.sort) queryString.append('sort', params.sort);
+      if (params?.featured) queryString.append('isFeatured', params.featured);
+      if (params?.limit) queryString.append('limit', String(params.limit));
 
       const response = await fetch(`${API_URL}/products?${queryString.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch products');

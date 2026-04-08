@@ -204,6 +204,30 @@ exports.getMe = async (req, res) => {
 };
 
 /**
+ * @desc    Update user profile
+ * @route   PUT /api/auth/profile
+ * @access  Private
+ */
+exports.updateProfile = async (req, res) => {
+  try {
+    const { firstName, lastName, phone } = req.body;
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        ...(firstName !== undefined && { firstName }),
+        ...(lastName  !== undefined && { lastName }),
+        ...(phone     !== undefined && { phone }),
+      },
+      select: { id: true, email: true, firstName: true, lastName: true, phone: true, role: true, status: true },
+    });
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ success: false, message: 'Error updating profile', error: error.message });
+  }
+};
+
+/**
  * @desc    Logout user
  * @route   POST /api/auth/logout
  * @access  Private

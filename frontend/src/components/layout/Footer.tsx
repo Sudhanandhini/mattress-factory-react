@@ -1,18 +1,13 @@
-'use client';
-
-import Link from 'next/link';
-import Image from "next/image"
-import { Facebook, Instagram, Twitter, Youtube, Linkedin, Mail, Phone, MapPin, Clock, ArrowRight } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { AnimatedSection } from '../ui/AnimatedSection';
-import logo from "../../images/logo.png"
+import { Link } from 'react-router-dom';
+import { Facebook, Instagram, Twitter, Youtube, Linkedin, Mail, Phone, Clock, ArrowRight } from 'lucide-react';
+import logo from "../../images/logo.png";
 
 const quickLinks = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
   { label: 'Products', href: '/products' },
-   { label: 'Warranty', href: '/warranty' },
-      { label: 'FAQ', href: '/faq' },
+  { label: 'Warranty', href: '/warranty' },
+  { label: 'FAQ', href: '/faq' },
   { label: 'Contact', href: '/contact' },
 ];
 
@@ -36,20 +31,16 @@ const socialLinks = [
 export function Footer() {
   return (
     <footer className="bg-[#f0f0f0] text-gray-300">
-      {/* CTA Banner */}
-  
-
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Company Info */}
           <div>
-            <Link href="/" className="flex items-center gap-2 mb-5">
-            <div>
-              <Image src={logo} alt="logo" width={300}  className="object-contain" />
-            </div>
+            <Link to="/" className="flex items-center gap-2 mb-5">
+              <div>
+                <img src={logo} alt="logo" style={{ width: 300 }} className="object-contain" />
+              </div>
             </Link>
-          
             <div className="flex gap-3">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
@@ -74,7 +65,7 @@ export function Footer() {
               {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    to={link.href}
                     className="text-black hover:text-accent-500 transition-colors duration-200 flex items-center gap-2 group text-sm"
                   >
                     <ArrowRight className="w-3 h-3 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
@@ -92,7 +83,7 @@ export function Footer() {
               {categories.map((cat) => (
                 <li key={cat.href}>
                   <Link
-                    href={cat.href}
+                    to={cat.href}
                     className="text-black hover:text-accent-500 transition-colors duration-200 flex items-center gap-2 group text-sm"
                   >
                     <ArrowRight className="w-3 h-3 opacity-0 -ml-5 group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
@@ -118,7 +109,7 @@ export function Footer() {
               <li className="flex items-start gap-3">
                 <Mail className="w-4 h-4 text-accent-400 mt-1 flex-shrink-0" />
                 <a href="mailto:info@mattressfactory.in" className="text-black hover:text-accent-500 transition-colors">
-                 info@mattressfactory.in
+                  info@mattressfactory.in
                 </a>
               </li>
               <li className="flex items-start gap-3">
@@ -128,21 +119,15 @@ export function Footer() {
                   <p>Sunday: 10:00 am - 4:00 pm</p>
                 </div>
               </li>
-               <li className="flex items-start gap-3">
+              <li className="flex items-start gap-3">
                 <Clock className="w-4 h-4 text-accent-400 mt-1 flex-shrink-0" />
                 <div className="text-black">
-                 
-                  <p>Sulakshmi Enterprise, 
-
-No. 29/2 (Old No. 1), Studio Road,
-
-J.B. Kaval, Near Rajkumar Samadhi,
-
-Munneshwara Block, Yeshwanthpur,
-
-Bangalore – 560058,
-
-Karnataka, India</p>
+                  <p>Sulakshmi Enterprise,
+                    No. 29/2 (Old No. 1), Studio Road,
+                    J.B. Kaval, Near Rajkumar Samadhi,
+                    Munneshwara Block, Yeshwanthpur,
+                    Bangalore – 560058,
+                    Karnataka, India</p>
                 </div>
               </li>
             </ul>
@@ -156,10 +141,10 @@ Karnataka, India</p>
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-black">
             <p>&copy; {new Date().getFullYear()} MATTRESS FACTORY. All Rights Reserved.</p>
             <div className="flex flex-wrap items-center gap-4">
-              <Link href="/privacy" className="hover:text-accent-500 transition-colors">Privacy Policy</Link>
-              <Link href="/return" className="hover:text-accent-500 transition-colors">Return Policy</Link>
-              <Link href="/shipping" className="hover:text-accent-500 transition-colors">Shipping Policy</Link>
-              <Link href="/terms" className="hover:text-accent-500 transition-colors">Terms &amp; Conditions</Link>
+              <Link to="/privacy" className="hover:text-accent-500 transition-colors">Privacy Policy</Link>
+              <Link to="/return" className="hover:text-accent-500 transition-colors">Return Policy</Link>
+              <Link to="/shipping" className="hover:text-accent-500 transition-colors">Shipping Policy</Link>
+              <Link to="/terms" className="hover:text-accent-500 transition-colors">Terms &amp; Conditions</Link>
             </div>
             <p>
               Developed by{' '}

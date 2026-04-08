@@ -27,7 +27,9 @@ const app = express();
 // ==================== SECURITY MIDDLEWARE ====================
 
 // Helmet for security headers
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 // CORS configuration
 const corsOptions = {
@@ -88,7 +90,12 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Static files for uploads
-app.use('/uploads', express.static('uploads'));
+const path = require('path');
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+}, express.static(path.join(__dirname, '..', 'uploads')));
 
 // ==================== ERROR HANDLING ====================
 

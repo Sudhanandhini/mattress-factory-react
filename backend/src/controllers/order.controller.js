@@ -126,7 +126,7 @@ exports.getOrder = async (req, res) => {
 };
 
 /**
- * @desc    Create order
+ * @desc    Create order (inline cart + address from frontend)
  * @route   POST /api/orders
  * @access  Private
  */
@@ -134,145 +134,85 @@ exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
     const {
-      shippingAddressId,
-      paymentMethod,
-      couponCode,
-      customerNotes,
+      name,
+      phone,
+      email,
+      address,
+      city,
+      state,
+      pincode,
+      notes,
+      items,
+      subtotal: clientSubtotal,
+      tax: clientTax,
+      total: clientTotal,
     } = req.body;
 
-    // Get cart
-    const cart = await prisma.cart.findUnique({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: true,
-            variant: true,
-          },
-        },
-      },
-    });
-
-    if (!cart || cart.items.length === 0) {
+    if (!name || !phone || !address) {
       return res.status(400).json({
         success: false,
-        message: 'Cart is empty',
+        message: 'Name, phone and address are required',
       });
     }
 
-    // Verify shipping address
-    const address = await prisma.address.findFirst({
-      where: {
-        id: shippingAddressId,
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Order must contain at least one item',
+      });
+    }
+
+    // Build order items from frontend cart
+    const orderItems = items.map(item => ({
+      productId:   item.productId,
+      variantId:   item.variantId || null,
+      productName: item.productName,
+      variantName: item.variantLabel || null,
+      quantity:    item.quantity,
+      price:       item.price,
+      total:       item.price * item.quantity,
+    }));
+
+    const subtotal    = parseFloat(clientSubtotal) || orderItems.reduce((s, i) => s + i.total, 0);
+    const tax         = parseFloat(clientTax)      || Math.round(subtotal * 0.18);
+    const shippingCharge = 0;
+    const total       = parseFloat(clientTotal)    || subtotal + tax;
+
+    const orderNumber = generateOrderNumber();
+
+    // Create (or reuse) an Address record from inline data
+    const savedAddress = await prisma.address.create({
+      data: {
         userId,
+        fullName:     name,
+        phone,
+        addressLine1: address,
+        city:         city    || '',
+        state:        state   || '',
+        pincode:      pincode || '',
+        type:         'HOME',
       },
     });
 
-    if (!address) {
-      return res.status(404).json({
-        success: false,
-        message: 'Shipping address not found',
-      });
-    }
-
-    // Calculate totals
-    let subtotal = 0;
-    const orderItems = [];
-
-    for (const item of cart.items) {
-      const itemTotal = parseFloat(item.price) * item.quantity;
-      subtotal += itemTotal;
-
-      orderItems.push({
-        productId: item.productId,
-        variantId: item.variantId,
-        productName: item.product.name,
-        variantName: item.variant ? item.variant.size : null,
-        quantity: item.quantity,
-        price: item.price,
-        total: itemTotal,
-      });
-    }
-
-    // Apply coupon if provided
-    let discount = 0;
-    let couponDiscount = 0;
-    if (couponCode) {
-      const coupon = await prisma.coupon.findUnique({
-        where: { code: couponCode.toUpperCase() },
-      });
-
-      if (
-        coupon &&
-        coupon.isActive &&
-        new Date() >= coupon.validFrom &&
-        new Date() <= coupon.validUntil
-      ) {
-        if (coupon.type === 'PERCENTAGE') {
-          couponDiscount = (subtotal * parseFloat(coupon.value)) / 100;
-          if (coupon.maxDiscount) {
-            couponDiscount = Math.min(
-              couponDiscount,
-              parseFloat(coupon.maxDiscount)
-            );
-          }
-        } else {
-          couponDiscount = parseFloat(coupon.value);
-        }
-        discount = couponDiscount;
-
-        // Update coupon usage
-        await prisma.coupon.update({
-          where: { id: coupon.id },
-          data: { usedCount: { increment: 1 } },
-        });
-      }
-    }
-
-    // Calculate shipping
-    const shippingThreshold =
-      parseFloat(process.env.FREE_SHIPPING_THRESHOLD) || 5000;
-    const shippingCharge =
-      subtotal >= shippingThreshold
-        ? 0
-        : parseFloat(process.env.SHIPPING_CHARGE_BELOW_THRESHOLD) || 500;
-
-    // Calculate tax (18% GST)
-    const tax = (subtotal - discount) * 0.18;
-
-    // Total
-    const total = subtotal - discount + shippingCharge + tax;
-
-    // Generate order number
-    const orderNumber = generateOrderNumber();
-
-    // Create order
     const order = await prisma.order.create({
       data: {
         orderNumber,
         userId,
-        shippingAddressId,
+        shippingAddressId: savedAddress.id,
         subtotal,
-        discount,
+        discount:      0,
         shippingCharge,
         tax,
         total,
-        couponCode: couponCode?.toUpperCase(),
-        couponDiscount,
-        paymentMethod,
-        customerNotes,
+        paymentMethod: 'COD',
+        customerNotes: notes || null,
+        adminNotes: email ? `Email: ${email}` : null,
         items: {
           create: orderItems,
         },
       },
       include: {
-        items: {
-          include: {
-            product: true,
-            variant: true,
-          },
-        },
-        shippingAddress: true,
+        items: true,
       },
     });
 
@@ -280,36 +220,30 @@ exports.createOrder = async (req, res) => {
     await prisma.orderStatusHistory.create({
       data: {
         orderId: order.id,
-        status: 'PENDING',
-        notes: 'Order created',
+        status:  'PENDING',
+        notes:   'Order placed by customer',
       },
     });
 
-    // Clear cart
-    await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id },
-    });
-
-    // Get user details for email
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    // Send order confirmation email
-    await emailService.sendOrderConfirmationEmail(
-      user.email,
-      user.firstName,
-      orderNumber,
-      {
-        items: order.items,
-        total,
+    // Send confirmation email (non-blocking)
+    try {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user?.email) {
+        await emailService.sendOrderConfirmationEmail(
+          user.email,
+          user.firstName,
+          orderNumber,
+          { items: order.items, total }
+        );
       }
-    );
+    } catch (mailErr) {
+      console.error('Order email error (non-fatal):', mailErr.message);
+    }
 
     res.status(201).json({
       success: true,
       message: 'Order created successfully',
-      data: order,
+      data: { orderNumber: order.orderNumber, id: order.id },
     });
   } catch (error) {
     console.error('Create order error:', error);

@@ -1,7 +1,5 @@
-'use client';
-
 import { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, Plus, Trash2, Star, Upload, X, Gift, Package, ChevronDown, Check, FolderTree } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -87,10 +85,18 @@ export const labelCls = 'block text-sm font-medium text-gray-700 mb-1.5';
 
 // ─── Upload helper ────────────────────────────────────────────────────────────
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 async function uploadFile(file: File): Promise<string> {
   const fd = new FormData();
   fd.append('file', file);
-  const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+  // Include auth token stored by useAuthStore
+  const token = (() => { try { const s = JSON.parse(localStorage.getItem('mattress-auth') || '{}'); return s?.state?.token || ''; } catch { return ''; } })();
+  const res = await fetch(`${API_URL}/admin/upload`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: fd,
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Upload failed');
   return data.url as string;
@@ -141,7 +147,7 @@ export function ProductForm({
   const catDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('/api/admin/categories')
+    fetch(`${API_URL}/categories`)
       .then(r => r.json())
       .then(j => { if (j.success) setAllCategories(j.data); });
   }, []);
@@ -226,7 +232,7 @@ export function ProductForm({
     <div className="max-w-4xl mx-auto space-y-6 pb-10">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/admin/products" className="p-2 rounded-lg hover:bg-gray-100 transition">
+        <Link to="/admin/products" className="p-2 rounded-lg hover:bg-gray-100 transition">
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
         <div>
@@ -638,7 +644,7 @@ export function ProductForm({
 
         {/* ── Actions ─────────────────────────────────────────── */}
         <div className="flex gap-3 justify-end pt-2">
-          <Link href="/admin/products"
+          <Link to="/admin/products"
             className="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
             Cancel
           </Link>

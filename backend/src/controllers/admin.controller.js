@@ -465,6 +465,15 @@ exports.getAdminProducts = async (req, res) => {
         status: true,
         isFeatured: true,
         createdAt: true,
+        images: {
+          select: { url: true, isPrimary: true },
+          orderBy: { sortOrder: 'asc' },
+          take: 1,
+        },
+        categories: {
+          select: { category: { select: { name: true } } },
+          take: 1,
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -608,13 +617,16 @@ exports.importProductsFromCSV = async (req, res) => {
  */
 exports.createAdminProduct = async (req, res) => {
   try {
-    const { name, sku, description, basePrice, stock, categoryId } = req.body;
+    const {
+      name, sku, shortDescription, description,
+      basePrice, discountPrice, stock, lowStockAlert,
+      brand, material, warranty, status, isFeatured,
+      categoryIds = [],
+      images = [], specifications = [], variants = [], freebies = [],
+    } = req.body;
 
-    if (!name || !sku || !basePrice || stock === undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields',
-      });
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Product name is required' });
     }
 
     const slug = await generateUniqueSlug(name);
@@ -623,34 +635,54 @@ exports.createAdminProduct = async (req, res) => {
       data: {
         name,
         slug,
-        sku,
-        description: description || '',
-        basePrice: parseFloat(basePrice),
-        discountPrice: req.body.discountPrice
-          ? parseFloat(req.body.discountPrice)
-          : null,
-        stock: parseInt(stock),
-        lowStockAlert: req.body.lowStockAlert || 10,
-        brand: req.body.brand || null,
-        material: req.body.material || null,
-        warranty: req.body.warranty || null,
-        status: req.body.status || 'ACTIVE',
-        isFeatured: req.body.isFeatured || false,
-        categoryId: categoryId || '',
+        sku: sku || null,
+        shortDescription: shortDescription || null,
+        description: description || null,
+        basePrice: basePrice ? parseFloat(basePrice) : null,
+        discountPrice: discountPrice ? parseFloat(discountPrice) : null,
+        stock: parseInt(stock) || 0,
+        lowStockAlert: parseInt(lowStockAlert) || 10,
+        brand: brand || null,
+        material: material || null,
+        warranty: warranty || null,
+        status: status || 'ACTIVE',
+        isFeatured: Boolean(isFeatured),
+        // Relations
+        categories: categoryIds.length ? {
+          create: categoryIds.map(cid => ({ categoryId: cid })),
+        } : undefined,
+        images: images.length ? {
+          create: images.map((img, i) => ({
+            url: img.url,
+            altText: img.altText || null,
+            isPrimary: img.isPrimary || i === 0,
+            sortOrder: i,
+          })),
+        } : undefined,
+        specifications: specifications.length ? {
+          create: specifications.map((s, i) => ({ label: s.label, value: s.value, sortOrder: i })),
+        } : undefined,
+        variants: variants.length ? {
+          create: variants.map((v, i) => ({
+            sizeGroup: v.sizeGroup || null,
+            size: v.size,
+            thickness: v.thickness || null,
+            firmness: v.firmness || null,
+            price: parseFloat(v.price),
+            salePrice: v.salePrice ? parseFloat(v.salePrice) : null,
+            sortOrder: i,
+          })),
+        } : undefined,
+        freebies: freebies.length ? {
+          create: freebies.map((f, i) => ({ name: f.name, image: f.image || null, sortOrder: i })),
+        } : undefined,
       },
     });
 
-    res.status(201).json({
-      success: true,
-      data: product,
-    });
+    res.status(201).json({ success: true, data: product });
   } catch (error) {
     console.error('Error creating product:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error creating product',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: 'Error creating product', error: error.message });
   }
 };
 
@@ -699,28 +731,101 @@ exports.updateAdminProduct = async (req, res) => {
       stock, lowStockAlert,
       brand, material, warranty,
       status, isFeatured,
+      categoryIds,
+      images, specifications, variants, freebies,
     } = req.body;
 
+    // Update scalar fields
     const updateData = {};
     if (name !== undefined) updateData.name = name;
-    if (shortDescription !== undefined) updateData.shortDescription = shortDescription;
-    if (description !== undefined) updateData.description = description;
-    if (basePrice !== undefined) updateData.basePrice = parseFloat(basePrice);
+    if (shortDescription !== undefined) updateData.shortDescription = shortDescription || null;
+    if (description !== undefined) updateData.description = description || null;
+    if (basePrice !== undefined) updateData.basePrice = basePrice ? parseFloat(basePrice) : null;
     if (discountPrice !== undefined) updateData.discountPrice = discountPrice ? parseFloat(discountPrice) : null;
-    if (stock !== undefined) updateData.stock = parseInt(stock);
-    if (lowStockAlert !== undefined) updateData.lowStockAlert = parseInt(lowStockAlert);
+    if (stock !== undefined) updateData.stock = parseInt(stock) || 0;
+    if (lowStockAlert !== undefined) updateData.lowStockAlert = parseInt(lowStockAlert) || 10;
     if (brand !== undefined) updateData.brand = brand || null;
     if (material !== undefined) updateData.material = material || null;
     if (warranty !== undefined) updateData.warranty = warranty || null;
     if (status !== undefined) updateData.status = status;
     if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
 
-    const product = await prisma.product.update({
-      where: { id },
-      data: updateData,
-    });
+    await prisma.product.update({ where: { id }, data: updateData });
 
-    res.json({ success: true, message: 'Product updated successfully', data: product });
+    // Replace categories
+    if (categoryIds !== undefined) {
+      await prisma.productCategory.deleteMany({ where: { productId: id } });
+      if (categoryIds.length) {
+        await prisma.productCategory.createMany({
+          data: categoryIds.map(cid => ({ productId: id, categoryId: cid })),
+          skipDuplicates: true,
+        });
+      }
+    }
+
+    // Replace images
+    if (images !== undefined) {
+      await prisma.productImage.deleteMany({ where: { productId: id } });
+      if (images.length) {
+        await prisma.productImage.createMany({
+          data: images.map((img, i) => ({
+            productId: id,
+            url: img.url,
+            altText: img.altText || null,
+            isPrimary: img.isPrimary || i === 0,
+            sortOrder: i,
+          })),
+        });
+      }
+    }
+
+    // Replace specifications
+    if (specifications !== undefined) {
+      await prisma.productSpecification.deleteMany({ where: { productId: id } });
+      if (specifications.length) {
+        await prisma.productSpecification.createMany({
+          data: specifications.map((s, i) => ({ productId: id, label: s.label, value: s.value, sortOrder: i })),
+        });
+      }
+    }
+
+    // Replace freebies
+    if (freebies !== undefined) {
+      await prisma.productFreebie.deleteMany({ where: { productId: id } });
+      if (freebies.length) {
+        await prisma.productFreebie.createMany({
+          data: freebies.map((f, i) => ({ productId: id, name: f.name, image: f.image || null, sortOrder: i })),
+        });
+      }
+    }
+
+    // Replace variants (keep existing by id, add new)
+    if (variants !== undefined) {
+      const existingIds = variants.filter(v => v.id).map(v => v.id);
+      // Delete variants not in the new list
+      await prisma.productVariant.deleteMany({
+        where: { productId: id, id: { notIn: existingIds } },
+      });
+      for (let i = 0; i < variants.length; i++) {
+        const v = variants[i];
+        const vdata = {
+          sizeGroup: v.sizeGroup || null,
+          size: v.size,
+          thickness: v.thickness || null,
+          firmness: v.firmness || null,
+          price: parseFloat(v.price),
+          salePrice: v.salePrice ? parseFloat(v.salePrice) : null,
+          sortOrder: i,
+        };
+        if (v.id) {
+          await prisma.productVariant.update({ where: { id: v.id }, data: vdata });
+        } else {
+          await prisma.productVariant.create({ data: { ...vdata, productId: id } });
+        }
+      }
+    }
+
+    res.json({ success: true, message: 'Product updated successfully' });
   } catch (error) {
     console.error('Update admin product error:', error);
     res.status(500).json({ success: false, message: 'Error updating product', error: error.message });
@@ -736,31 +841,29 @@ exports.deleteAdminProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Delete related data
-    await prisma.productImage.deleteMany({
-      where: { productId: id },
+    // Delete relations that may not have onDelete: Cascade
+    await prisma.orderItem.deleteMany({ where: { productId: id } });
+    await prisma.cartItem.deleteMany({ where: { productId: id } });
+    await prisma.wishlistItem.deleteMany({ where: { productId: id } });
+    await prisma.review.deleteMany({ where: { productId: id } });
+    await prisma.relatedProduct.deleteMany({
+      where: { OR: [{ productId: id }, { relatedProductId: id }] },
     });
 
-    await prisma.productVariant.deleteMany({
-      where: { productId: id },
-    });
+    // Cascade-covered relations (just to be safe)
+    await prisma.productImage.deleteMany({ where: { productId: id } });
+    await prisma.productVariant.deleteMany({ where: { productId: id } });
+    await prisma.productSpecification.deleteMany({ where: { productId: id } });
+    await prisma.productFreebie.deleteMany({ where: { productId: id } });
+    await prisma.productBadge.deleteMany({ where: { productId: id } });
+    await prisma.productCategory.deleteMany({ where: { productId: id } });
 
-    const product = await prisma.product.delete({
-      where: { id },
-    });
+    await prisma.product.delete({ where: { id } });
 
-    res.status(200).json({
-      success: true,
-      message: 'Product deleted successfully',
-      data: product,
-    });
+    res.status(200).json({ success: true, message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Error deleting product:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting product',
-      error: error.message,
-    });
+    res.status(500).json({ success: false, message: 'Error deleting product', error: error.message });
   }
 };
 
@@ -824,5 +927,98 @@ function parseStock(value) {
   const num = parseInt(value);
   return isNaN(num) ? 0 : num;
 }
+
+// ─── SEO: Global ─────────────────────────────────────────────────────────────
+
+const SEO_GLOBAL_KEYS = [
+  'siteTitle', 'siteDescription', 'siteKeywords',
+  'ogTitle', 'ogDescription', 'ogImage',
+  'googleAnalyticsId', 'robotsTxt',
+];
+
+exports.getGlobalSeo = async (req, res) => {
+  try {
+    const rows = await prisma.setting.findMany({
+      where: { key: { in: SEO_GLOBAL_KEYS.map(k => `seo_${k}`) } },
+    });
+    const result = {};
+    rows.forEach(r => { result[r.key.replace('seo_', '')] = r.value; });
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.updateGlobalSeo = async (req, res) => {
+  try {
+    const allowed = SEO_GLOBAL_KEYS.filter(k => req.body[k] !== undefined);
+    await Promise.all(
+      allowed.map(k =>
+        prisma.setting.upsert({
+          where: { key: `seo_${k}` },
+          update: { value: String(req.body[k]) },
+          create: { key: `seo_${k}`, value: String(req.body[k]), type: 'string' },
+        })
+      )
+    );
+    res.json({ success: true, message: 'Global SEO saved' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─── SEO: Pages ───────────────────────────────────────────────────────────────
+
+exports.getPagesSeo = async (req, res) => {
+  try {
+    const rows = await prisma.setting.findMany({
+      where: { key: { startsWith: 'page_seo_' } },
+    });
+    const result = {};
+    rows.forEach(r => {
+      const route = r.key.replace('page_seo_', '');
+      try { result[route] = JSON.parse(r.value); } catch { result[route] = {}; }
+    });
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.updatePageSeo = async (req, res) => {
+  try {
+    const { route } = req.params;
+    const { metaTitle = '', metaDescription = '', focusKeywords = '', canonicalUrl = '' } = req.body;
+    await prisma.setting.upsert({
+      where: { key: `page_seo_${route}` },
+      update: { value: JSON.stringify({ metaTitle, metaDescription, focusKeywords, canonicalUrl }) },
+      create: { key: `page_seo_${route}`, value: JSON.stringify({ metaTitle, metaDescription, focusKeywords, canonicalUrl }), type: 'json' },
+    });
+    res.json({ success: true, message: 'Page SEO saved' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─── SEO: Product ─────────────────────────────────────────────────────────────
+
+exports.updateProductSeo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { metaTitle, metaDescription, focusKeywords } = req.body;
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        ...(metaTitle !== undefined && { metaTitle }),
+        ...(metaDescription !== undefined && { metaDescription }),
+        ...(focusKeywords !== undefined && { metaKeywords: focusKeywords }),
+      },
+      select: { id: true, name: true, metaTitle: true, metaDescription: true, metaKeywords: true },
+    });
+    res.json({ success: true, data: product });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 module.exports = exports;

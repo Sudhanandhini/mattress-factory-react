@@ -10,13 +10,13 @@ exports.getProducts = async (req, res) => {
   try {
     const {
       page = 1,
-      limit = 12,
+      limit = 100,
       category,
       minPrice,
       maxPrice,
       size,
       search,
-      sort = 'createdAt',
+      sort = 'newest',
       order = 'desc',
       status,
       isFeatured,
@@ -24,17 +24,33 @@ exports.getProducts = async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    // Map frontend sort aliases to Prisma orderBy
+    const sortMap = {
+      newest:     { createdAt: 'desc' },
+      oldest:     { createdAt: 'asc' },
+      price_asc:  { discountPrice: 'asc' },
+      price_desc: { discountPrice: 'desc' },
+      rating:     { avgRating: 'desc' },
+      popular:    { viewCount: 'desc' },
+      // legacy field names pass-through
+      createdAt:  { createdAt: order },
+      name:       { name: order },
+    };
+    const orderBy = sortMap[sort] || { createdAt: 'desc' };
+
     // Build where clause
     const where = {};
 
     if (category) {
-      where.categories = { some: { categoryId: category } };
+      // category param can be a slug or an ID — filter by slug
+      where.categories = { some: { category: { slug: category } } };
     }
 
     if (status) {
       where.status = status;
     } else {
-      where.status = 'ACTIVE'; // Default: only show active products
+      // Show ACTIVE and OUT_OF_STOCK — hide only INACTIVE/DISCONTINUED
+      where.status = { in: ['ACTIVE', 'OUT_OF_STOCK'] };
     }
 
     if (isFeatured === 'true') {
@@ -74,7 +90,7 @@ exports.getProducts = async (req, res) => {
             orderBy: { price: 'asc' },
           },
         },
-        orderBy: { [sort]: order },
+        orderBy,
       }),
       prisma.product.count({ where }),
     ]);

@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, EyeOff, User, Mail, Phone, Lock } from 'lucide-react';
@@ -41,7 +39,8 @@ export function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     }
     setLoading(true);
     try {
-      const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const endpoint = mode === 'login' ? `${API_URL}/auth/login` : `${API_URL}/auth/signup`;
       const body = mode === 'login'
         ? { email: form.email, password: form.password }
         : { firstName: form.firstName, lastName: form.lastName, email: form.email, phone: form.phone, password: form.password };
@@ -54,11 +53,13 @@ export function AuthModal({ onClose, onSuccess }: AuthModalProps) {
       const json = await res.json();
 
       if (!json.success) {
-        toast.error(json.message || 'Something went wrong');
+        // Show first validation error if available, else fallback message
+        const firstError = json.errors?.[0]?.msg;
+        toast.error(firstError || json.message || 'Something went wrong');
         return;
       }
 
-      setAuth(json.data.user, json.data.token);
+      setAuth(json.data.user, json.data.accessToken ?? json.data.token);
       toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!');
       onSuccess?.();
       onClose();
@@ -74,7 +75,8 @@ export function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     if (!forgotEmail) { toast.error('Enter your email'); return; }
     setLoading(true);
     try {
-      const res  = await fetch('/api/auth/forgot-password', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res  = await fetch(`${API_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail }),
@@ -253,6 +255,13 @@ export function AuthModal({ onClose, onSuccess }: AuthModalProps) {
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+
+          {/* Password requirements hint — only on register */}
+          {mode === 'register' && (
+            <p className="text-[11px] text-gray-400 -mt-1">
+              Min 8 chars with uppercase, lowercase, number &amp; special character (e.g. <span className="font-medium text-gray-500">Admin@123</span>)
+            </p>
+          )}
 
           {/* Forgot password link — only on login */}
           {mode === 'login' && (

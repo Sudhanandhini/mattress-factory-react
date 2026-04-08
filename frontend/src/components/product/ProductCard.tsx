@@ -1,8 +1,5 @@
-'use client';
-
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Star, Eye, ArrowRight, Heart, ShoppingCart } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -48,17 +45,27 @@ interface ProductCardProps {
   index?: number;
 }
 
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+
+function resolveImageUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const router = useRouter();
-  const { isLoggedIn } = useAuthStore();
+  const navigate = useNavigate();
+  const { isLoggedIn, openAuthModal } = useAuthStore();
   const addToCart = useCartStore((s) => s.addItem);
   const { toggle: toggleWishlist, has: inWishlist } = useWishlistStore();
+  const [imgError, setImgError] = useState(false);
 
   const categoryLabel = product.category || 'Mattress';
-  const imgUrl =
+  const rawUrl =
     product.images?.find((i) => i.isPrimary)?.url ||
     product.images?.[0]?.url ||
     product.image;
+  const imgUrl = resolveImageUrl(rawUrl);
 
   const isWishlisted = inWishlist(product.id);
 
@@ -66,8 +73,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (!isLoggedIn()) {
-      toast.error('Please login to add to wishlist');
-      router.push('/login');
+      openAuthModal();
       return;
     }
     toggleWishlist({
@@ -85,8 +91,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (!isLoggedIn()) {
-      toast.error('Please login to add to cart');
-      router.push('/login');
+      openAuthModal();
       return;
     }
     const activeVariants = (product.variants || []).filter((v) => v.isActive !== false);
@@ -114,15 +119,14 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     >
       <div className="bg-white rounded-2xl shadow-md overflow-hidden card-hover border border-gray-100">
         {/* Image */}
-        <Link href={`/products/${product.slug}`}>
+        <Link to={`/products/${product.slug}`}>
           <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-            {imgUrl ? (
-              <Image
+            {imgUrl && !imgError ? (
+              <img
                 src={imgUrl}
                 alt={product.name}
-                fill
-                className="object-cover group-hover:scale-110 transition-transform duration-500"
-                sizes="(max-width: 768px) 100vw, 33vw"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                onError={() => setImgError(true)}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-500">
@@ -142,7 +146,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               </span>
             )}
 
-            {/* Wishlist & Cart icons — always visible */}
+            {/* Wishlist & Cart icons */}
             <div className="absolute bottom-3 right-3 flex gap-2">
               <button
                 onClick={handleWishlist}
@@ -175,7 +179,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             {categoryLabel}
           </p>
 
-          <Link href={`/products/${product.slug}`}>
+          <Link to={`/products/${product.slug}`}>
             <h3 className="font-bold text-navy-700 mb-1.5 group-hover:text-accent-500 transition-colors line-clamp-1 text-lg">
               {product.name}
             </h3>
@@ -211,9 +215,9 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           {/* Price */}
           <div className="flex items-baseline gap-2 mb-4">
             <span className="text-xl font-bold text-navy-700">
-              &#8377;{product.discountPrice.toLocaleString()}
+              &#8377;{(product.discountPrice ?? product.basePrice ?? 0).toLocaleString()}
             </span>
-            {product.discountPercent > 0 && (
+            {product.discountPercent > 0 && product.basePrice != null && (
               <span className="text-sm text-gray-400 line-through">
                 &#8377;{product.basePrice.toLocaleString()}
               </span>
@@ -222,11 +226,11 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <Link href={`/products/${product.slug}`} className="text-accent-500 text-sm font-semibold hover:underline flex items-center gap-1">
+            <Link to={`/products/${product.slug}`} className="text-accent-500 text-sm font-semibold hover:underline flex items-center gap-1">
               View Details <ArrowRight className="w-3.5 h-3.5" />
             </Link>
             <div className="flex-1" />
-            <Link href={`/products/${product.slug}`}>
+            <Link to={`/products/${product.slug}`}>
               <Button size="sm" variant="primary">
                 <Eye className="w-4 h-4 mr-1" /> View
               </Button>
