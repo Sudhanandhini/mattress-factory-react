@@ -3,8 +3,12 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trash2, Plus, Minus, ShoppingCart, ChevronRight,
-  Phone, CheckCircle, LogIn, Lock,
+  CreditCard, CheckCircle, LogIn, Lock, Loader2,
 } from 'lucide-react';
+
+declare global {
+  interface Window { Razorpay: any; }
+}
 import { useCartStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { AuthModal } from '@/components/auth/AuthModal';
@@ -24,9 +28,9 @@ export default function CartPage() {
   const loggedIn = !!token && !!user;
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
-  const [placing, setPlacing]         = useState(false);
-  const [ordered, setOrdered]         = useState(false);
-  const [orderNumber, setOrderNumber] = useState('');
+  const [placing, setPlacing]           = useState(false);
+  const [ordered, setOrdered]           = useState(false);
+  const [orderNumber, setOrderNumber]   = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [form, setForm] = useState({
@@ -52,60 +56,141 @@ export default function CartPage() {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  const doPlaceOrder = async () => {
+  const validateForm = () => {
     if (!form.name || !form.phone || !form.address) {
       toast.error('Please fill name, phone and address.');
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const createOrder = async (rzpPaymentId: string, rzpOrderId: string, rzpSignature: string) => {
+    const res = await fetch(`${API_URL}/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        name:          form.name,
+        phone:         form.phone,
+        email:         form.email || undefined,
+        address:       form.address,
+        city:          form.city,
+        state:         form.state,
+        pincode:       form.pincode,
+        notes:         form.notes,
+        subtotal:      sub,
+        tax,
+        total,
+        paymentMethod: 'RAZORPAY',
+        razorpayPaymentId: rzpPaymentId,
+        razorpayOrderId:   rzpOrderId,
+        razorpaySignature: rzpSignature,
+        items: items.map(i => ({
+          productId:    i.productId,
+          variantId:    i.variantId,
+          productName:  i.productName,
+          variantLabel: i.variantLabel,
+          price:        i.price,
+          quantity:     i.quantity,
+        })),
+      }),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    return json.data.orderNumber as string;
+  };
+
+  const loadRazorpayScript = () =>
+    new Promise<boolean>(resolve => {
+      if (window.Razorpay) { resolve(true); return; }
+      const s = document.createElement('script');
+      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      s.onload  = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.body.appendChild(s);
+    });
+
+  const handleRazorpay = async () => {
+    if (!validateForm()) return;
     setPlacing(true);
     try {
-      const res = await fetch(`${API_URL}/orders`, {
+      const loaded = await loadRazorpayScript();
+      if (!loaded) { toast.error('Could not load Razorpay. Check your connection.'); setPlacing(false); return; }
+
+      // Create Razorpay order on the backend
+      const res  = await fetch(`${API_URL}/payments/initiate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          name:     form.name,
-          phone:    form.phone,
-          email:    form.email || undefined,
-          address:  form.address,
-          city:     form.city,
-          state:    form.state,
-          pincode:  form.pincode,
-          notes:    form.notes,
-          subtotal: sub,
-          tax,
-          total,
-          items: items.map(i => ({
-            productId:    i.productId,
-            variantId:    i.variantId,
-            productName:  i.productName,
-            variantLabel: i.variantLabel,
-            price:        i.price,
-            quantity:     i.quantity,
-          })),
-        }),
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ amount: total }),
       });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message);
-      setOrderNumber(json.data.orderNumber);
-      clearCart();
-      setOrdered(true);
-    } catch {
-      toast.error('Failed to place order. Please try again or call us.');
-    } finally {
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+
+      const options = {
+        key:      data.data.key,
+        amount:   data.data.amount,
+        currency: 'INR',
+        name:     'Mattress Factory',
+        description: items.map(i => i.productName).join(', '),
+        order_id: data.data.orderId,
+        prefill: { name: form.name, email: form.email, contact: form.phone },
+        theme: { color: '#4f46e5' },
+        handler: async (response: any) => {
+          try {
+            setPlacing(true);
+            // Verify signature on backend
+            const vRes  = await fetch(`${API_URL}/payments/verify-signature`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+              body: JSON.stringify({
+                razorpay_order_id:   response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature:  response.razorpay_signature,
+              }),
+            });
+            const vData = await vRes.json();
+            if (!vData.success) {
+              toast.error('Payment verification failed. Contact support with ID: ' + response.razorpay_payment_id);
+              setPlacing(false);
+              return;
+            }
+            const orderNum = await createOrder(
+              response.razorpay_payment_id,
+              response.razorpay_order_id,
+              response.razorpay_signature,
+            );
+            setOrderNumber(orderNum);
+            clearCart();
+            setOrdered(true);
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Order creation failed';
+            toast.error('Payment received but order failed. Contact support. ' + msg);
+            setPlacing(false);
+          }
+        },
+        modal: { ondismiss: () => setPlacing(false) },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Payment initiation failed';
+      if (msg.toLowerCase().includes('no longer exist')) {
+        clearCart();
+        toast.error('Some products are no longer available. Cart cleared — please add products again.');
+      } else {
+        toast.error(msg || 'Could not initiate payment. Please try again.');
+      }
       setPlacing(false);
     }
   };
 
   const handleOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loggedIn) {
-      setShowAuthModal(true);
-      return;
-    }
-    doPlaceOrder();
+    if (!loggedIn) { setShowAuthModal(true); return; }
+    handleRazorpay();
   };
 
   if (ordered) {
@@ -120,7 +205,7 @@ export default function CartPage() {
             <p className="text-indigo-600 font-mono font-bold text-sm mb-2">Order #{orderNumber}</p>
           )}
           <p className="text-gray-500 text-sm max-w-sm">
-            Thank you! We have received your order and will call you shortly to confirm.
+            Payment successful! Your order is confirmed.
           </p>
         </div>
         <Link to="/products" className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition">
@@ -310,18 +395,30 @@ export default function CartPage() {
                     placeholder="Order notes (optional)" rows={2}
                     className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-indigo-400 transition resize-none"
                   />
+                  {/* Payment method badge */}
+                  <div className="flex items-center gap-3 p-3 rounded-xl border-2 border-indigo-500 bg-indigo-50">
+                    <CreditCard className="w-5 h-5 text-blue-600 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">Pay Online</p>
+                      <p className="text-xs text-gray-400">UPI, Cards, Net Banking via Razorpay</p>
+                    </div>
+                    <span className="ml-auto">
+                      <img src="https://razorpay.com/favicon.ico" alt="Razorpay" className="w-5 h-5 rounded" />
+                    </span>
+                  </div>
+
                   <button
                     type="submit"
                     disabled={placing}
-                    className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm"
                   >
                     {placing
-                      ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Placing Order...</>
-                      : <><Phone className="w-4 h-4" /> Place Order</>
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                      : <><CreditCard className="w-4 h-4" /> Pay ₹{fmt(total)} Online</>
                     }
                   </button>
                   <p className="text-xs text-gray-400 text-center">
-                    We will call you to confirm your order and arrange delivery.
+                    100% secure payments via Razorpay
                   </p>
                 </form>
               </div>

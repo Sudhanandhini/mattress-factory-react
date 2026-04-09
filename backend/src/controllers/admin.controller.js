@@ -375,6 +375,41 @@ exports.getAllOrders = async (req, res) => {
  * @route   PUT /api/admin/orders/:id/status
  * @access  Private/Admin
  */
+/**
+ * @desc    Get single order detail (admin)
+ * @route   GET /api/admin/orders/:id
+ * @access  Admin
+ */
+exports.getOrderById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+        shippingAddress: true,
+        payment: true,
+        items: {
+          include: {
+            product: { include: { images: { where: { isPrimary: true } } } },
+            variant: true,
+          },
+        },
+        statusHistory: { orderBy: { createdAt: 'asc' } },
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    res.json({ success: true, data: order });
+  } catch (error) {
+    console.error('Get order by id error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching order', error: error.message });
+  }
+};
+
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;

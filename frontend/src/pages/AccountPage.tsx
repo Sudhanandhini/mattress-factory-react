@@ -79,13 +79,30 @@ export default function AccountPage() {
 
   useEffect(() => { if (!user || !token) navigate('/'); }, [user, token, navigate]);
 
+  // Normalise order items from backend shape → UI shape
+  const normaliseOrder = (o: any): Order => ({
+    ...o,
+    total: parseFloat(o.total) || 0,
+    items: (o.items || []).map((item: any) => ({
+      id:           item.id,
+      name:         item.productName || item.name || 'Product',
+      quantity:     item.quantity,
+      price:        parseFloat(item.price) || 0,
+      variantLabel: item.variantName || item.variantLabel || '',
+    })),
+  });
+
   // Fetch orders
   useEffect(() => {
     if (!token || activeTab !== 'orders') return;
     setLoadingOrders(true);
     fetch(`${API_URL}/orders`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
-      .then(d => { setOrders(Array.isArray(d) ? d : (d.data?.orders || d.orders || [])); setLoadingOrders(false); })
+      .then(d => {
+        const raw = Array.isArray(d) ? d : (d.data?.orders || d.orders || []);
+        setOrders(raw.map(normaliseOrder));
+        setLoadingOrders(false);
+      })
       .catch(() => setLoadingOrders(false));
   }, [token, activeTab]);
 
@@ -133,7 +150,7 @@ export default function AccountPage() {
     try {
       const res = await fetch(`${API_URL}/orders/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       const d = await res.json();
-      setOrderDetails(p => ({ ...p, [id]: d.data ?? d }));
+      setOrderDetails(p => ({ ...p, [id]: normaliseOrder(d.data ?? d) }));
     } catch { toast.error('Could not load order details'); } finally { setLoadingDetail(null); }
   };
 

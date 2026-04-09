@@ -20,7 +20,7 @@ exports.getCart = async (req, res) => {
                 images: {
                   where: { isPrimary: true },
                 },
-                category: true,
+                categories: { include: { category: true } },
               },
             },
             variant: true,

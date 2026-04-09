@@ -146,6 +146,10 @@ exports.createOrder = async (req, res) => {
       subtotal: clientSubtotal,
       tax: clientTax,
       total: clientTotal,
+      paymentMethod: clientPaymentMethod,
+      razorpayPaymentId,
+      razorpayOrderId,
+      razorpaySignature,
     } = req.body;
 
     if (!name || !phone || !address) {
@@ -162,16 +166,48 @@ exports.createOrder = async (req, res) => {
       });
     }
 
+    // Validate all productIds exist in the database
+    const productIds = [...new Set(items.map(i => i.productId))];
+    const existingProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true },
+    });
+    const foundProductIds = new Set(existingProducts.map(p => p.id));
+    const missingProducts = productIds.filter(id => !foundProductIds.has(id));
+    if (missingProducts.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'One or more products in your cart no longer exist. Please refresh your cart and try again.',
+      });
+    }
+
+    // Validate variantIds — if a variantId is stale (no longer in DB), treat it as no-variant
+    const rawVariantIds = [...new Set(items.map(i => i.variantId).filter(Boolean))];
+    let validVariantIds = new Set();
+    if (rawVariantIds.length > 0) {
+      const existingVariants = await prisma.productVariant.findMany({
+        where: { id: { in: rawVariantIds } },
+        select: { id: true },
+      });
+      validVariantIds = new Set(existingVariants.map(v => v.id));
+    }
+
     // Build order items from frontend cart
-    const orderItems = items.map(item => ({
-      productId:   item.productId,
-      variantId:   item.variantId || null,
-      productName: item.productName,
-      variantName: item.variantLabel || null,
-      quantity:    item.quantity,
-      price:       item.price,
-      total:       item.price * item.quantity,
-    }));
+    const orderItems = items.map(item => {
+      const variantId = (item.variantId && validVariantIds.has(item.variantId))
+        ? item.variantId
+        : null;
+      return {
+        productId:   item.productId,
+        variantId,
+        productName: item.productName,
+        variantName: item.variantLabel || null,
+        quantity:    item.quantity,
+        price:       parseFloat(item.price)  || 0,
+        discount:    0,
+        total:       (parseFloat(item.price) || 0) * item.quantity,
+      };
+    });
 
     const subtotal    = parseFloat(clientSubtotal) || orderItems.reduce((s, i) => s + i.total, 0);
     const tax         = parseFloat(clientTax)      || Math.round(subtotal * 0.18);
@@ -194,6 +230,11 @@ exports.createOrder = async (req, res) => {
       },
     });
 
+    const isPaid = clientPaymentMethod === 'RAZORPAY' && !!razorpayPaymentId;
+    const orderStatus    = isPaid ? 'CONFIRMED' : 'PENDING';
+    const paymentStatus  = isPaid ? 'PAID'      : 'PENDING';
+    const resolvedMethod = clientPaymentMethod === 'RAZORPAY' ? 'RAZORPAY' : 'COD';
+
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -204,9 +245,11 @@ exports.createOrder = async (req, res) => {
         shippingCharge,
         tax,
         total,
-        paymentMethod: 'COD',
-        customerNotes: notes || null,
-        adminNotes: email ? `Email: ${email}` : null,
+        paymentMethod:  resolvedMethod,
+        paymentStatus,
+        status:         orderStatus,
+        customerNotes:  notes || null,
+        adminNotes:     email ? `Email: ${email}` : null,
         items: {
           create: orderItems,
         },
@@ -216,12 +259,28 @@ exports.createOrder = async (req, res) => {
       },
     });
 
+    // Create Payment record for Razorpay payments
+    if (isPaid) {
+      await prisma.payment.create({
+        data: {
+          orderId:           order.id,
+          method:            'RAZORPAY',
+          amount:            total,
+          status:            'PAID',
+          razorpayOrderId:   razorpayOrderId   || null,
+          razorpayPaymentId: razorpayPaymentId || null,
+          razorpaySignature: razorpaySignature || null,
+          paidAt:            new Date(),
+        },
+      });
+    }
+
     // Add status history
     await prisma.orderStatusHistory.create({
       data: {
         orderId: order.id,
-        status:  'PENDING',
-        notes:   'Order placed by customer',
+        status:  orderStatus,
+        notes:   isPaid ? 'Payment received via Razorpay' : 'Order placed by customer',
       },
     });
 
@@ -246,11 +305,11 @@ exports.createOrder = async (req, res) => {
       data: { orderNumber: order.orderNumber, id: order.id },
     });
   } catch (error) {
-    console.error('Create order error:', error);
+    console.error('Create order error:', error.code || '', error.message);
     res.status(500).json({
       success: false,
       message: 'Error creating order',
-      error: error.message,
+      error: error.meta?.cause || error.message,
     });
   }
 };

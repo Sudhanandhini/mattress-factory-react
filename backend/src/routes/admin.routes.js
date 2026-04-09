@@ -48,6 +48,7 @@ router.put('/users/:id/status', adminController.updateUserStatus);
 
 // Order Management
 router.get('/orders', adminController.getAllOrders);
+router.get('/orders/:id', adminController.getOrderById);
 router.put('/orders/:id/status', adminController.updateOrderStatus);
 
 // Product Management

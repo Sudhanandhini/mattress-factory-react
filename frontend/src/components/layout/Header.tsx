@@ -38,7 +38,7 @@ export function Header() {
   const [activeCoupons, setActiveCoupons]   = useState<ActiveCoupon[]>([]);
   const [mounted, setMounted]               = useState(false);
 
-  const cartCount     = useCartStore(s => s.totalItems());
+  const cartCount     = useCartStore(s => s.items.reduce((sum, i) => sum + i.quantity, 0));
   const wishlistCount = useWishlistStore(s => s.items.length);
   const { user, isLoggedIn, logout, authModalOpen, openAuthModal, closeAuthModal } = useAuthStore();
   const navigate = useNavigate();
@@ -143,7 +143,7 @@ export function Header() {
               {/* Cart */}
               <Link to="/cart" className="relative p-2 text-gray-700 hover:text-navy-700 transition-colors">
                 <ShoppingCart className="w-8 h-8" />
-                {mounted && (
+                {mounted && cartCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
                     {cartCount}
                   </span>

@@ -9,6 +9,7 @@ interface Order {
   id: string;
   orderNumber: string;
   status: string;
+  paymentStatus: string;
   total: number;
   createdAt: string;
   user: { firstName?: string; lastName?: string; email: string } | null;
@@ -26,6 +27,13 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const ALL_STATUSES = ['PENDING','CONFIRMED','PROCESSING','SHIPPED','DELIVERED','CANCELLED','RETURNED'];
+
+const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  PAID:     'bg-green-100 text-green-700',
+  PENDING:  'bg-yellow-100 text-yellow-700',
+  FAILED:   'bg-red-100 text-red-700',
+  REFUNDED: 'bg-purple-100 text-purple-700',
+};
 
 function formatCurrency(n: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
@@ -123,6 +131,7 @@ export default function OrdersPage() {
                 <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Customer</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Amount</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">Payment</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-600">Action</th>
               </tr>
             </thead>
@@ -143,6 +152,11 @@ export default function OrdersPage() {
                   <td className="px-4 py-3">
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${STATUS_COLORS[o.status] || 'bg-gray-100 text-gray-600'}`}>
                       {o.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 hidden lg:table-cell">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${PAYMENT_STATUS_COLORS[o.paymentStatus] || 'bg-gray-100 text-gray-600'}`}>
+                      {o.paymentStatus || 'PENDING'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">

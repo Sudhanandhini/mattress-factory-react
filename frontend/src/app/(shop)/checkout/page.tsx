@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ChevronRight, CheckCircle, Lock, LogIn, Truck,
-  CreditCard, Banknote, ShoppingBag, Loader2, Tag, X,
+  CreditCard, ShoppingBag, Loader2, Tag, X,
 } from 'lucide-react';
 import { useCartStore, useBuyNowStore } from '@/store/useStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -37,7 +37,7 @@ function CheckoutPage() {
   const { user, token, isLoggedIn }                             = useAuthStore();
   const loggedIn = isLoggedIn();
 
-  const [payMethod, setPayMethod]     = useState<PaymentMethod>('COD');
+  const [payMethod, setPayMethod]     = useState<PaymentMethod>('RAZORPAY');
   const [placing, setPlacing]         = useState(false);
   const [ordered, setOrdered]         = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
@@ -197,12 +197,6 @@ function CheckoutPage() {
     }
   };
 
-  // ── COD flow ──────────────────────────────────────────────────────
-  const handleCOD = async () => {
-    if (!validateForm()) return;
-    await placeOrder();
-  };
-
   // ── Razorpay flow ─────────────────────────────────────────────────
   const loadRazorpayScript = () =>
     new Promise<boolean>(resolve => {
@@ -290,8 +284,7 @@ function CheckoutPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!loggedIn) { setShowAuthModal(true); return; }
-    if (payMethod === 'COD') handleCOD();
-    else handleRazorpay();
+    handleRazorpay();
   };
 
   // ── Redirect if nothing to checkout ──────────────────────────────
@@ -323,9 +316,7 @@ function CheckoutPage() {
             <p className="text-indigo-600 font-mono font-bold text-sm mb-2">Order #{orderNumber}</p>
           )}
           <p className="text-gray-500 text-sm max-w-sm">
-            {payMethod === 'RAZORPAY'
-              ? 'Payment successful! Your order is confirmed.'
-              : 'Thank you! We will call you shortly to confirm delivery.'}
+            Payment successful! Your order is confirmed.
           </p>
         </div>
         <div className="flex gap-3">
@@ -520,41 +511,15 @@ function CheckoutPage() {
                   <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-indigo-500" /> Payment Method
                   </h2>
-                  <div className="space-y-3">
-
-                    {/* COD */}
-                    <label className={`flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition ${payMethod === 'COD' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                      <input
-                        type="radio" name="payMethod" value="COD"
-                        checked={payMethod === 'COD'}
-                        onChange={() => setPayMethod('COD')}
-                        className="accent-indigo-600"
-                      />
-                      <Banknote className="w-5 h-5 text-green-600 shrink-0" />
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">Cash on Delivery</p>
-                        <p className="text-xs text-gray-400">Pay when your order arrives</p>
-                      </div>
-                      <span className="ml-auto text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">Free</span>
-                    </label>
-
-                    {/* Razorpay */}
-                    <label className={`flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition ${payMethod === 'RAZORPAY' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                      <input
-                        type="radio" name="payMethod" value="RAZORPAY"
-                        checked={payMethod === 'RAZORPAY'}
-                        onChange={() => setPayMethod('RAZORPAY')}
-                        className="accent-indigo-600"
-                      />
-                      <CreditCard className="w-5 h-5 text-blue-600 shrink-0" />
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">Pay Online</p>
-                        <p className="text-xs text-gray-400">UPI, Cards, Net Banking via Razorpay</p>
-                      </div>
-                      <span className="ml-auto">
-                        <img src="https://razorpay.com/favicon.ico" alt="Razorpay" className="w-5 h-5 rounded" />
-                      </span>
-                    </label>
+                  <div className="flex items-center gap-3 p-3.5 rounded-xl border-2 border-indigo-500 bg-indigo-50">
+                    <CreditCard className="w-5 h-5 text-blue-600 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">Pay Online</p>
+                      <p className="text-xs text-gray-400">UPI, Cards, Net Banking via Razorpay</p>
+                    </div>
+                    <span className="ml-auto">
+                      <img src="https://razorpay.com/favicon.ico" alt="Razorpay" className="w-5 h-5 rounded" />
+                    </span>
                   </div>
                 </div>
 
@@ -562,18 +527,12 @@ function CheckoutPage() {
                 <button
                   type="submit"
                   disabled={placing}
-                  className={`w-full py-4 rounded-xl font-bold text-base transition active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm ${
-                    payMethod === 'RAZORPAY'
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-green-600 hover:bg-green-700 text-white'
-                  }`}
+                  className="w-full py-4 rounded-xl font-bold text-base bg-blue-600 hover:bg-blue-700 text-white transition active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2 shadow-sm"
                 >
                   {placing ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
-                  ) : payMethod === 'RAZORPAY' ? (
-                    <><CreditCard className="w-4 h-4" /> Pay ₹{fmt(total)} Online</>
                   ) : (
-                    <><Banknote className="w-4 h-4" /> Place Order (COD)</>
+                    <><CreditCard className="w-4 h-4" /> Pay ₹{fmt(total)} Online</>
                   )}
                 </button>
               </form>

@@ -1,11 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const { protect, adminOnly } = require('../middleware/auth.middleware');
+const {
+  getProductReviews,
+  createReview,
+  updateReview,
+  deleteReview,
+  getAllReviews,
+  approveReview,
+} = require('../controllers/review.controller');
 
-// Review routes will be implemented here
-// GET /api/reviews/product/:productId
-// POST /api/reviews (protected)
-// PUT /api/reviews/:id (protected)
-// DELETE /api/reviews/:id (protected)
+// Public
+router.get('/product/:productId', getProductReviews);
+
+// Admin
+router.get('/admin', protect, adminOnly, getAllReviews);
+router.patch('/:id/approve', protect, adminOnly, approveReview);
+
+// User (protected)
+router.post('/', protect, createReview);
+router.put('/:id', protect, updateReview);
+router.delete('/:id', protect, deleteReview);
 
 module.exports = router;
