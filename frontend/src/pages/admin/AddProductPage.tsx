@@ -15,6 +15,7 @@ export default function AddProductPage() {
   const [specs, setSpecs] = useState<SpecRow[]>([{ label: '', value: '' }]);
   const [freebies, setFreebies] = useState<FreebieRow[]>([emptyFreebie()]);
   const [variants, setVariants] = useState<VariantRow[]>([emptyVariant()]);
+  const [offers, setOffers] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -45,6 +46,7 @@ export default function AddProductPage() {
           price: parseFloat(v.price),
           salePrice: v.salePrice ? parseFloat(v.salePrice) : null,
         })),
+        offers: offers.filter(o => o.trim()),
         categoryIds: selectedCategories,
       };
 
@@ -86,6 +88,8 @@ export default function AddProductPage() {
       onSpecsChange={setSpecs}
       onFreebiesChange={setFreebies}
       onVariantsChange={setVariants}
+      offers={offers}
+      onOffersChange={setOffers}
       onCategoriesChange={setSelectedCategories}
       onSubmit={handleSubmit}
       onErrorClose={() => setError('')}

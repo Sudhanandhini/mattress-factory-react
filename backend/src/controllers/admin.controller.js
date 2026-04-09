@@ -656,6 +656,7 @@ exports.createAdminProduct = async (req, res) => {
       name, sku, shortDescription, description,
       basePrice, discountPrice, stock, lowStockAlert,
       brand, material, warranty, status, isFeatured,
+      offers = [],
       categoryIds = [],
       images = [], specifications = [], variants = [], freebies = [],
     } = req.body;
@@ -682,6 +683,7 @@ exports.createAdminProduct = async (req, res) => {
         warranty: warranty || null,
         status: status || 'ACTIVE',
         isFeatured: Boolean(isFeatured),
+        offers: Array.isArray(offers) && offers.length ? offers : null,
         // Relations
         categories: categoryIds.length ? {
           create: categoryIds.map(cid => ({ categoryId: cid })),
@@ -766,6 +768,7 @@ exports.updateAdminProduct = async (req, res) => {
       stock, lowStockAlert,
       brand, material, warranty,
       status, isFeatured,
+      offers,
       categoryIds,
       images, specifications, variants, freebies,
     } = req.body;
@@ -784,6 +787,7 @@ exports.updateAdminProduct = async (req, res) => {
     if (warranty !== undefined) updateData.warranty = warranty || null;
     if (status !== undefined) updateData.status = status;
     if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
+    if (offers !== undefined) updateData.offers = Array.isArray(offers) && offers.length ? offers : null;
 
     await prisma.product.update({ where: { id }, data: updateData });
 

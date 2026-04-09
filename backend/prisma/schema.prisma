@@ -167,6 +167,7 @@ model Product {
   material        String?
   warranty        String?
   features        Json?         // Array of features
+  offers          Json?         // Array of offer strings shown on product page
 
   // Tax
   taxStatus       String?       @default("taxable") // taxable, shipping, none

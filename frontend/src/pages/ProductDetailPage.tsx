@@ -20,10 +20,27 @@ interface Product {
   id: string; name: string; slug: string; shortDescription?: string; description?: string;
   basePrice: number; discountPrice: number; discountPercent: number;
   brand?: string; material?: string; warranty?: string;
+  offers?: string[];
   images: ProductImage[]; variants: Variant[]; avgRating?: number; reviewCount?: number;
   specifications?: { label: string; value: string }[];
   freebies?: { name: string; image?: string }[];
   categories?: { id: string; name: string; slug: string }[];
+}
+
+function parseShortDescLines(html: string): { thickness: string[]; offers: string[] } {
+  const cleaned = cleanHtml(html);
+  const text = cleaned.replace(/<[^>]+>/g, '\n');
+  const lines = text.split(/\n/).map(l => l.replace(/&[a-z#0-9]+;/gi, ' ').trim()).filter(Boolean);
+  const thickness = lines.filter(l => /THICKNESS\s*[=:]/i.test(l));
+  const offers = lines
+    .filter(l => /flat\s+\d+%/i.test(l))
+    .map(l => l
+      .replace(/will be applied in cart page/gi, '')
+      .replace(/in cart page/gi, '')
+      .replace(/\.\s*$/, '')
+      .trim()
+    );
+  return { thickness, offers };
 }
 
 function formatCurrency(n: number) {
@@ -85,6 +102,8 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'reviews'>('description');
   const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
+  const [variantModalOpen, setVariantModalOpen] = useState(false);
+  const [tempVariant, setTempVariant] = useState<Variant | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -157,8 +176,112 @@ export default function ProductDetailPage() {
     toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist!');
   };
 
+  /* ── Variant Modal helpers ── */
+  const uniqueSizeGroups = [...new Set(activeVariants.map(v => v.sizeGroup || ''))].filter(Boolean);
+  const uniqueSizes = [...new Set(activeVariants.map(v => v.size || v.label || ''))].filter(Boolean);
+  const uniqueThicknesses = [...new Set(activeVariants.map(v => v.thickness || ''))].filter(Boolean);
+  const tempSizeGroup = tempVariant?.sizeGroup || '';
+  const tempSize = tempVariant?.size || tempVariant?.label || '';
+  const tempThickness = tempVariant?.thickness || '';
+
+  const pickTemp = (sg: string, sz: string, th: string) => {
+    const exact = activeVariants.find(v =>
+      (!sg || v.sizeGroup === sg) && (!sz || (v.size || v.label || '') === sz) && (!th || v.thickness === th)
+    );
+    const loose = activeVariants.find(v =>
+      (!sg || v.sizeGroup === sg) && (!sz || (v.size || v.label || '') === sz)
+    ) || activeVariants.find(v => (!sg || v.sizeGroup === sg));
+    setTempVariant(exact || loose || tempVariant);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* ── Variant Modal ── */}
+      {variantModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4">
+          <div className="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-900">Choose a Variant</h2>
+              <button onClick={() => setVariantModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 text-lg font-bold transition-colors">×</button>
+            </div>
+
+            {/* Modal body */}
+            <div className="overflow-y-auto flex-1 px-6 py-5 space-y-6">
+              {/* Product thumb */}
+              <div className="flex items-center gap-3">
+                {primaryImage && <img src={primaryImage} alt={product.name} className="w-14 h-14 object-cover rounded-xl border border-gray-100" />}
+                <p className="text-sm font-semibold text-gray-800">{product.name}</p>
+              </div>
+
+              {/* Size Group */}
+              {uniqueSizeGroups.length > 0 && (
+                <div>
+                  <p className="text-sm font-bold text-gray-700 mb-3">Size Group</p>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueSizeGroups.map(sg => {
+                      const isActive = tempSizeGroup === sg;
+                      return (
+                        <button key={sg} onClick={() => pickTemp(sg, tempSize, tempThickness)}
+                          className={`px-5 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${isActive ? 'bg-[#1a2a6c] text-white border-[#1a2a6c]' : 'border-gray-200 text-gray-700 hover:border-[#1a2a6c] hover:text-[#1a2a6c] bg-white'}`}>
+                          {sg}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Dimension / Size */}
+              {uniqueSizes.length > 0 && (
+                <div>
+                  <p className="text-sm font-bold text-gray-700 mb-3">Dimension</p>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueSizes.map(sz => {
+                      const isActive = tempSize === sz;
+                      return (
+                        <button key={sz} onClick={() => pickTemp(tempSizeGroup, sz, tempThickness)}
+                          className={`px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${isActive ? 'bg-[#1a2a6c] text-white border-[#1a2a6c]' : 'border-gray-200 text-gray-700 hover:border-[#1a2a6c] hover:text-[#1a2a6c] bg-white'}`}>
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Thickness */}
+              {uniqueThicknesses.length > 0 && (
+                <div>
+                  <p className="text-sm font-bold text-gray-700 mb-3">Thickness</p>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueThicknesses.map(th => {
+                      const isActive = tempThickness === th;
+                      return (
+                        <button key={th} onClick={() => pickTemp(tempSizeGroup, tempSize, th)}
+                          className={`px-5 py-2.5 rounded-xl border-2 text-sm font-bold transition-all ${isActive ? 'bg-[#1a2a6c] text-white border-[#1a2a6c]' : 'border-gray-200 text-gray-700 hover:border-[#1a2a6c] hover:text-[#1a2a6c] bg-white'}`}>
+                          {th}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm button */}
+            <div className="px-6 py-4 border-t border-gray-100">
+              <button
+                onClick={() => { if (tempVariant) setSelectedVariant(tempVariant); setVariantModalOpen(false); }}
+                className="w-full py-4 bg-[#1a2a6c] hover:bg-[#1a2a6c]/90 text-white rounded-xl font-bold text-base transition-all"
+              >
+                Confirm Variant
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-100">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-3">
@@ -316,53 +439,62 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Variants */}
+              {/* Variants — Choose Size button */}
               {activeVariants.length > 0 && (
-                <div className="space-y-3">
-                  <p className="text-sm font-semibold text-gray-700">
-                    Select Size
-                    {selectedVariant && (
-                      <span className="ml-2 font-normal text-gray-400 text-xs">
-                        — {selectedVariant.size || selectedVariant.sizeGroup}
-                        {selectedVariant.thickness ? ` | ${selectedVariant.thickness}"` : ''}
-                        {selectedVariant.firmness ? ` | ${selectedVariant.firmness}` : ''}
-                      </span>
-                    )}
-                  </p>
-
-                  {/* Size chips */}
-                  <div className="flex flex-wrap gap-2">
-                    {activeVariants.map(v => {
-                      const isActive = selectedVariant?.id === v.id;
-                      const label = v.label || v.size || v.sizeGroup || '';
-                      return (
-                        <button
-                          key={v.id}
-                          onClick={() => setSelectedVariant(v)}
-                          className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-all ${
-                            isActive
-                              ? 'bg-[#1a2a6c] text-white border-[#1a2a6c] shadow-md'
-                              : 'border-gray-200 text-gray-600 hover:border-[#1a2a6c] hover:text-[#1a2a6c] bg-white'
-                          }`}
-                        >
-                          {label}
-                          {v.salePrice ? (
-                            <span className={`ml-1.5 text-xs ${isActive ? 'text-blue-200' : 'text-gray-400'}`}>
-                              {formatCurrency(v.salePrice)}
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-gray-700">Choose Size</p>
+                  <button
+                    onClick={() => { setTempVariant(selectedVariant); setVariantModalOpen(true); }}
+                    className="w-full flex items-center justify-between px-4 py-3 border-2 border-[#1a2a6c] rounded-xl bg-white hover:bg-[#1a2a6c]/5 transition-all"
+                  >
+                    <span className="text-sm font-semibold text-[#1a2a6c]">
+                      {selectedVariant
+                        ? [
+                            selectedVariant.sizeGroup,
+                            selectedVariant.size || selectedVariant.label,
+                            selectedVariant.thickness ? `${selectedVariant.thickness} inch` : null,
+                            selectedVariant.firmness,
+                          ].filter(Boolean).join(' | ')
+                        : 'Select a size'}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-[#1a2a6c]" />
+                  </button>
                 </div>
               )}
 
-              {/* Short Description */}
-              {product.shortDescription && (
-                <div className="text-sm text-gray-600 leading-relaxed border-l-4 border-[#1a2a6c]/20 pl-4"
-                  dangerouslySetInnerHTML={{ __html: cleanHtml(product.shortDescription) }} />
-              )}
+              {/* Thickness + Offer lines — from DB or fallback-parsed */}
+              {(() => {
+                // Prefer data from DB offers field; fall back to parsing shortDescription
+                const dbOffers = Array.isArray(product.offers) && product.offers.length ? product.offers : null;
+                const { thickness, offers: parsedOffers } = product.shortDescription
+                  ? parseShortDescLines(product.shortDescription)
+                  : { thickness: [], offers: [] };
+
+                // Thickness from selected variant
+                const thicknessLine = selectedVariant?.thickness
+                  ? [`THICKNESS = ${selectedVariant.thickness} INCH`]
+                  : thickness;
+
+                const offerLines = dbOffers ?? parsedOffers;
+                if (!thicknessLine.length && !offerLines.length) return null;
+
+                return (
+                  <div className="space-y-2">
+                    {thicknessLine.map((t, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-[#1a2a6c]/5 border border-[#1a2a6c]/20 rounded-xl px-4 py-3">
+                        <span className="text-xl">📐</span>
+                        <span className="text-[#1a2a6c] font-bold text-sm tracking-wide">{t}</span>
+                      </div>
+                    ))}
+                    {offerLines.map((o, i) => (
+                      <div key={i} className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                        <span className="text-green-600 font-extrabold text-base mt-0.5">%</span>
+                        <span className="text-green-800 text-sm font-medium leading-snug">{o}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* Quantity + Actions */}
               <div className="space-y-3">
@@ -380,16 +512,16 @@ export default function ProductDetailPage() {
                     </button>
                   </div>
                 </div>
-
+{/* 
                 <button onClick={handleOrderNow}
                   className="w-full py-3.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-bold text-base shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
                   <Phone className="w-4 h-4" /> Order Now
-                </button>
+                </button> */}
 
-                <button onClick={handleAddToCart}
+                {/* <button onClick={handleAddToCart}
                   className="w-full py-3.5 bg-white border-2 border-[#1a2a6c] text-[#1a2a6c] hover:bg-[#1a2a6c] hover:text-white rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
                   <ShoppingCart className="w-4 h-4" /> Add to Cart
-                </button>
+                </button> */}
               </div>
 
               {/* Trust Badges */}

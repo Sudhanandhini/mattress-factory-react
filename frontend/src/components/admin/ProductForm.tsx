@@ -117,6 +117,7 @@ interface ProductFormProps {
   specs: SpecRow[];
   freebies: FreebieRow[];
   variants: VariantRow[];
+  offers: string[];
   selectedCategories: string[];
   submitting: boolean;
   error: string;
@@ -126,16 +127,17 @@ interface ProductFormProps {
   onSpecsChange: (specs: SpecRow[]) => void;
   onFreebiesChange: (freebies: FreebieRow[]) => void;
   onVariantsChange: (variants: VariantRow[]) => void;
+  onOffersChange: (offers: string[]) => void;
   onCategoriesChange: (ids: string[]) => void;
   onSubmit: (e: React.FormEvent) => void;
   onErrorClose: () => void;
 }
 
 export function ProductForm({
-  mode, productName, formData, images, specs, freebies, variants,
+  mode, productName, formData, images, specs, freebies, variants, offers,
   selectedCategories, submitting, error, success,
   onFormChange, onImagesChange, onSpecsChange, onFreebiesChange, onVariantsChange,
-  onCategoriesChange, onSubmit, onErrorClose,
+  onOffersChange, onCategoriesChange, onSubmit, onErrorClose,
 }: ProductFormProps) {
 
   const imageFileRefs   = useRef<(HTMLInputElement | null)[]>([]);
@@ -341,6 +343,42 @@ export function ProductForm({
               <textarea name="shortDescription" value={formData.shortDescription} onChange={handleChange}
                 rows={2} className={inputCls} placeholder="Brief product summary" />
             </div>
+
+            {/* Offer Lines */}
+            <div className="md:col-span-2">
+              <div className="flex items-center justify-between mb-2">
+                <label className={labelCls}>Offer Lines <span className="text-xs font-normal text-gray-400">(shown on product page)</span></label>
+                <button type="button" onClick={() => onOffersChange([...offers, ''])}
+                  className="text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-lg transition">
+                  + Add Offer
+                </button>
+              </div>
+              <div className="space-y-2">
+                {offers.map((offer, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={offer}
+                      onChange={e => {
+                        const next = [...offers];
+                        next[i] = e.target.value;
+                        onOffersChange(next);
+                      }}
+                      className={inputCls}
+                      placeholder={`e.g. Flat 51% off on purchase of new mattress`}
+                    />
+                    <button type="button" onClick={() => onOffersChange(offers.filter((_, idx) => idx !== i))}
+                      className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-400 hover:text-red-600 transition text-lg font-bold">
+                      ×
+                    </button>
+                  </div>
+                ))}
+                {offers.length === 0 && (
+                  <p className="text-xs text-gray-400 italic">No offer lines yet. Click "+ Add Offer" to add one.</p>
+                )}
+              </div>
+            </div>
+
             <div className="md:col-span-2">
               <label className={labelCls}>Full Description</label>
               <textarea name="description" value={formData.description} onChange={handleChange}

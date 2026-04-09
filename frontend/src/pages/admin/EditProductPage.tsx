@@ -22,6 +22,7 @@ export default function EditProductPage() {
   const [specs, setSpecs] = useState<SpecRow[]>([{ label: '', value: '' }]);
   const [freebies, setFreebies] = useState<FreebieRow[]>([emptyFreebie()]);
   const [variants, setVariants] = useState<VariantRow[]>([emptyVariant()]);
+  const [offers, setOffers] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -87,6 +88,9 @@ export default function EditProductPage() {
             salePrice: v.salePrice ? String(parseFloat(v.salePrice)) : '',
           })));
         }
+        if (Array.isArray(data.offers) && data.offers.length) {
+          setOffers(data.offers);
+        }
         if (data.categories?.length) {
           // Backend nests categories as [{ category: { id, name } }]
           setSelectedCategories(data.categories.map((c: any) => c.category?.id ?? c.id));
@@ -126,6 +130,7 @@ export default function EditProductPage() {
           price: parseFloat(v.price),
           salePrice: v.salePrice ? parseFloat(v.salePrice) : null,
         })),
+        offers: offers.filter(o => o.trim()),
         categoryIds: selectedCategories,
       };
 
@@ -175,6 +180,8 @@ export default function EditProductPage() {
       onSpecsChange={setSpecs}
       onFreebiesChange={setFreebies}
       onVariantsChange={setVariants}
+      offers={offers}
+      onOffersChange={setOffers}
       onCategoriesChange={setSelectedCategories}
       onSubmit={handleSubmit}
       onErrorClose={() => setError('')}
